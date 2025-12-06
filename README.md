@@ -1,15 +1,11 @@
-# `@napi-rs/package-template`
+# Hyper-FS
 
-![https://github.com/napi-rs/package-template/actions](https://github.com/napi-rs/package-template/workflows/CI/badge.svg)
+# Development
 
-> Template project for writing node packages with napi-rs.
-
-# Usage
-
-1. Click **Use this template**.
-2. **Clone** your project.
-3. Run `yarn install` to install dependencies.
-4. Run `yarn napi rename -n [@your-scope/package-name] -b [binary-name]` command under the project folder to rename your package.
+1. Run `pnpm install` to install dependencies.
+2. Edit files in `/src`
+3. Run `pnpm build` to build the lib could be invoked by Node.js
+4. Run `pnpm test` to check if everything is ok
 
 ## Install this test package
 

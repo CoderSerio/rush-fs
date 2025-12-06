@@ -10,7 +10,7 @@
 #![deny(clippy::all)]
 
 // define modules
-pub mod ls;
+pub mod read_dir;
 
 //export modules
-pub use ls::*;
+pub use read_dir::*;

@@ -1,21 +1,27 @@
-import { Bench } from 'tinybench'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-import { plus100 } from '../index.js'
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-function add(a: number) {
-  return a + 100
+async function runBenchmarks() {
+  const files = fs.readdirSync(__dirname).filter((file) => {
+    return file.endsWith('.ts') && file !== 'bench.ts' && !file.endsWith('.d.ts')
+  })
+
+  console.log(`Found ${files.length} benchmark files to run...`)
+
+  for (const file of files) {
+    console.log(`\n========================================`)
+    console.log(`Running benchmark: ${file}`)
+    console.log(`========================================`)
+
+    try {
+      await import(path.join(__dirname, file))
+    } catch (e) {
+      console.error(`Error running ${file}:`, e)
+    }
+  }
 }
 
-const b = new Bench()
-
-b.add('Native a + 100', () => {
-  plus100(10)
-})
-
-b.add('JavaScript a + 100', () => {
-  add(10)
-})
-
-await b.run()
-
-console.table(b.table())
+runBenchmarks()

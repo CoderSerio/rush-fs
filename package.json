@@ -1,6 +1,6 @@
 {
   "name": "hyper-fs",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Template project for writing node package with napi-rs",
   "main": "index.js",
   "repository": {
