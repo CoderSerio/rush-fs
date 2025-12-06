@@ -1,7 +1,7 @@
 use napi_derive::napi;
 use walkdir::WalkDir;
 
-#[napi] // 1. marco: expose the function to Node
+#[napi] // marco: expose the function to Node
 pub fn ls(path: String) -> Vec<String> {
   let mut res = Vec::new();
 
