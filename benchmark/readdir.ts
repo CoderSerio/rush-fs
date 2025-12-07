@@ -11,18 +11,29 @@ console.log(`Benchmarking readdir on: ${dir}`)
 
 bench
   .add('Node.js fs.readdirSync', () => {
+    fs.readdirSync(dir)
+  })
+  .add('Node.js fs.readdirSync (withFileTypes)', () => {
     fs.readdirSync(dir, { withFileTypes: true })
   })
-  .add('Node.js fs.readdirSync (recursive)', () => {
+  .add('Node.js fs.readdirSync (recursive, withFileTypes)', () => {
     fs.readdirSync(dir, { recursive: true, withFileTypes: true })
   })
   .add('hyper-fs readdirSync (default)', () => {
     readdirSync(dir)
   })
+  .add('hyper-fs readdirSync (2 threads)', () => {
+    readdirSync(dir, { concurrency: 2 })
+  })
+  .add('hyper-fs readdirSync (2 threads, recursive)', () => {
+    readdirSync(dir, { concurrency: 2, recursive: true })
+  })
   .add('hyper-fs readdirSync (4 threads)', () => {
     readdirSync(dir, { concurrency: 4 })
   })
-
+  .add('hyper-fs readdirSync (4 threads, recursive)', () => {
+    readdirSync(dir, { concurrency: 4, recursive: true })
+  })
 await bench.run()
 
 console.table(bench.table())

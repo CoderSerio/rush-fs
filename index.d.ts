@@ -2,7 +2,7 @@
 /* eslint-disable */
 export interface Dirent {
   name: string
-  path: string
+  parentPath: string
   isDir: boolean
 }
 
@@ -11,6 +11,11 @@ export declare function readdir(path: string, options?: ReaddirOptions | undefin
 export interface ReaddirOptions {
   skipHidden?: boolean
   concurrency?: number
+  recursive?: boolean
+  withFileTypes?: boolean
 }
 
-export declare function readdirSync(path: string, options?: ReaddirOptions | undefined | null): Array<Dirent>
+export declare function readdirSync(
+  path: string,
+  options?: ReaddirOptions | undefined | null,
+): Array<string> | Array<Dirent>
