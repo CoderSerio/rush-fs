@@ -9,18 +9,31 @@ const dir = fs.existsSync(targetDir) ? targetDir : process.cwd()
 
 console.log(`Benchmarking readdir on: ${dir}`)
 
+// Flat
 bench
-  .add('Node.js fs.readdirSync', () => {
+  .add('Node.js fs.readdirSync (flat)', () => {
     fs.readdirSync(dir, { withFileTypes: true })
   })
+  .add('hyper-fs readdirSync (flat)', () => {
+    readdirSync(dir, { recursive: false })
+  })
+
+// Recursive
+bench
   .add('Node.js fs.readdirSync (recursive)', () => {
-    fs.readdirSync(dir, { recursive: true, withFileTypes: true })
+    try {
+      // @ts-ignore
+      fs.readdirSync(dir, { recursive: true, withFileTypes: true })
+    } catch (e) {
+      // Fallback for older node versions or if not supported
+      fs.readdirSync(dir, { withFileTypes: true })
+    }
   })
-  .add('hyper-fs readdirSync (default)', () => {
-    readdirSync(dir)
+  .add('hyper-fs readdirSync (recursive)', () => {
+    readdirSync(dir, { recursive: true })
   })
-  .add('hyper-fs readdirSync (4 threads)', () => {
-    readdirSync(dir, { concurrency: 4 })
+  .add('hyper-fs readdirSync (recursive, 4 threads)', () => {
+    readdirSync(dir, { recursive: true, concurrency: 4 })
   })
 
 await bench.run()

@@ -7,8 +7,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "outDir": "./dist"
   },
-  "include": ["."],
-  "exclude": ["node_modules", "bench", "__test__"]
+  "include": [".", "src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -11,6 +11,7 @@ export declare function readdir(path: string, options?: ReaddirOptions | undefin
 export interface ReaddirOptions {
   skipHidden?: boolean
   concurrency?: number
+  recursive?: boolean
 }
 
 export declare function readdirSync(path: string, options?: ReaddirOptions | undefined | null): Array<Dirent>

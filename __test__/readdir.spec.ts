@@ -1,5 +1,5 @@
 import test from 'ava'
-import { readdirSync, readdir } from '../index.js'
+import { readdirSync, readdir } from '../src/wrapper/index'
 
 test('sync: should list files in current directory', (t) => {
   const files = readdirSync('.')
@@ -9,6 +9,7 @@ test('sync: should list files in current directory', (t) => {
 
   // Verify Dirent structure
   const packageJson = files.find((f) => f.name === 'package.json')
+  console.log(packageJson)
   t.truthy(packageJson, 'Result should contain package.json')
   t.is(packageJson?.isDir, false)
   t.true(packageJson?.path.includes('package.json'))
