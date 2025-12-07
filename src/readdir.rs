@@ -60,34 +60,40 @@ fn ls(
     let parent_path_val = search_path_str.to_string();
     let entries = fs::read_dir(path).map_err(|e| Error::from_reason(e.to_string()))?;
 
-    if with_file_types {
-      let mut result = Vec::with_capacity(64);
-      for entry in entries {
-        let entry = entry.map_err(|e| Error::from_reason(e.to_string()))?;
-        let file_name = entry.file_name();
-        let name_str = file_name.to_string_lossy();
-        if skip_hidden && name_str.starts_with('.') {
-          continue;
-        }
-        result.push(Dirent {
+    let mut result_files = if with_file_types {
+      None
+    } else {
+      Some(Vec::with_capacity(64))
+    };
+    let mut result_dirents = if with_file_types {
+      Some(Vec::with_capacity(64))
+    } else {
+      None
+    };
+
+    for entry in entries {
+      let entry = entry.map_err(|e| Error::from_reason(e.to_string()))?;
+      let file_name = entry.file_name();
+      let name_str = file_name.to_string_lossy();
+      if skip_hidden && name_str.starts_with('.') {
+        continue;
+      }
+
+      if let Some(ref mut list) = result_dirents {
+        list.push(Dirent {
           name: name_str.to_string(),
           parent_path: parent_path_val.clone(),
           is_dir: entry.file_type().map(|t| t.is_dir()).unwrap_or(false),
         });
+      } else if let Some(ref mut list) = result_files {
+        list.push(name_str.to_string());
       }
-      return Ok(Either::B(result));
+    }
+
+    if with_file_types {
+      return Ok(Either::B(result_dirents.unwrap()));
     } else {
-      let mut result = Vec::with_capacity(64);
-      for entry in entries {
-        let entry = entry.map_err(|e| Error::from_reason(e.to_string()))?;
-        let file_name = entry.file_name();
-        let name_str = file_name.to_string_lossy();
-        if skip_hidden && name_str.starts_with('.') {
-          continue;
-        }
-        result.push(name_str.to_string());
-      }
-      return Ok(Either::A(result));
+      return Ok(Either::A(result_files.unwrap()));
     }
   }
 
@@ -123,8 +129,7 @@ fn ls(
     Ok(Either::B(result))
   } else {
     // When recursive is true and withFileTypes is false, Node.js returns relative paths.
-    // jwalk entries have full paths.
-    // We need to strip the root path.
+    // But jwalk entries have full paths, We need to strip the root path.
     let root = path;
     let result = walk_dir
       .into_iter()

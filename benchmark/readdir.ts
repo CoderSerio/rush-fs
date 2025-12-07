@@ -22,17 +22,20 @@ bench
   .add('hyper-fs readdirSync (default)', () => {
     readdirSync(dir)
   })
-  .add('hyper-fs readdirSync (2 threads)', () => {
-    readdirSync(dir, { concurrency: 2 })
+  .add('hyper-fs readdirSync (withFileTypes)', () => {
+    readdirSync(dir, { withFileTypes: true })
   })
-  .add('hyper-fs readdirSync (2 threads, recursive)', () => {
-    readdirSync(dir, { concurrency: 2, recursive: true })
+  .add('hyper-fs readdirSync (recursive)', () => {
+    readdirSync(dir, { recursive: true })
   })
-  .add('hyper-fs readdirSync (4 threads)', () => {
-    readdirSync(dir, { concurrency: 4 })
+  .add('hyper-fs readdirSync (recursive, withFileTypes)', () => {
+    readdirSync(dir, { recursive: true, withFileTypes: true })
   })
   .add('hyper-fs readdirSync (4 threads, recursive)', () => {
     readdirSync(dir, { concurrency: 4, recursive: true })
+  })
+  .add('hyper-fs readdirSync (4 threads, recursive, withFileTypes)', () => {
+    readdirSync(dir, { concurrency: 4, recursive: true, withFileTypes: true })
   })
 await bench.run()
 
