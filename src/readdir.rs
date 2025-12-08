@@ -1,3 +1,5 @@
+use crate::types::Dirent;
+use crate::utils::get_file_type_id;
 use jwalk::{Parallelism, WalkDir};
 use napi::bindgen_prelude::*;
 use napi::Task;
@@ -28,14 +30,6 @@ pub struct ReaddirOptions {
   pub concurrency: Option<u32>,
   pub recursive: Option<bool>,
   pub with_file_types: Option<bool>,
-}
-
-#[napi(object)] // Similar to fs.Dirent
-#[derive(Clone)]
-pub struct Dirent {
-  pub name: String,
-  pub parent_path: String,
-  pub is_dir: bool,
 }
 
 // #[napi] // marco: expose the function to Node
@@ -89,7 +83,7 @@ fn ls(
         list.push(Dirent {
           name: name_str.to_string(),
           parent_path: parent_path_val.clone(),
-          is_dir: entry.file_type().map(|t| t.is_dir()).unwrap_or(false),
+          file_type: entry.file_type().map(|t| get_file_type_id(&t)).unwrap_or(0),
         });
       } else if let Some(ref mut list) = result_files {
         list.push(name_str.to_string());
@@ -128,7 +122,7 @@ fn ls(
         Dirent {
           name: e.file_name().to_string_lossy().to_string(),
           parent_path: parent,
-          is_dir: e.file_type().is_dir(),
+          file_type: get_file_type_id(&e.file_type()),
         }
       })
       .collect();

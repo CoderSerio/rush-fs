@@ -12,7 +12,10 @@
 // define modules
 pub mod readdir;
 pub mod rm;
+pub mod types;
+pub mod utils;
 
 //export modules
 pub use readdir::*;
 pub use rm::*;
+pub use types::*;

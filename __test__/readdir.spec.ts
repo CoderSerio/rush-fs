@@ -25,7 +25,9 @@ test('sync: should return Dirent objects when withFileTypes is true', (t) => {
   const first = files[0]
   if (typeof first === 'object') {
     t.is(typeof first.name, 'string')
-    t.is(typeof first.isDir, 'boolean')
+    // Dirent in Node.js (and our implementation) uses methods, not properties for type checking
+    t.is(typeof first.isDirectory, 'function')
+    t.is(typeof first.isFile, 'function')
   } else {
     t.fail('Should return objects when withFileTypes is true')
   }
@@ -34,12 +36,14 @@ test('sync: should return Dirent objects when withFileTypes is true', (t) => {
   t.truthy(packageJson, 'Result should contain package.json')
 
   if (typeof packageJson !== 'string' && packageJson) {
-    t.is(packageJson.isDir, false)
+    t.is(packageJson.isFile(), true)
+    t.is(packageJson.isDirectory(), false)
   }
 
   const srcDir = files.find((f) => typeof f !== 'string' && f.name === 'src')
   if (srcDir && typeof srcDir !== 'string') {
-    t.is(srcDir.isDir, true, 'src should be identified as a directory')
+    t.is(srcDir.isDirectory(), true, 'src should be identified as a directory')
+    t.is(srcDir.isFile(), false)
   }
 })
 
