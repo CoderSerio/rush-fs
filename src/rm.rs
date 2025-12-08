@@ -73,8 +73,7 @@ fn remove_recursive(path: &Path, opts: &RmOptions) -> Result<()> {
 }
 
 fn remove(path_str: String, options: Option<RmOptions>) -> Result<()> {
-  let search_path_str = if path_str.is_empty() { "." } else { &path_str };
-  let path = Path::new(search_path_str);
+  let path = Path::new(&path_str);
 
   let opts = options.unwrap_or(RmOptions {
     force: Some(false),
