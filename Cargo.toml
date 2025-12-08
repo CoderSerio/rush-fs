@@ -9,11 +9,13 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-jwalk       = "0.8.1"
-napi        = "3.0.0"
-napi-derive = "3.4"
-serde       = "1.0.228"
-walkdir     = "2.5.0"
+jwalk          = "0.8.1"
+napi           = "3.0.0"
+napi-derive    = "3.4"
+rayon          = "1.11.0"
+remove_dir_all = "1.0.0"
+serde          = "1.0.228"
+walkdir        = "2.5.0"
 
 [build-dependencies]
 napi-build = "2"

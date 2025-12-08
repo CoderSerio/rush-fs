@@ -38,13 +38,18 @@ We are rewriting `fs` APIs one by one.
     encoding?: string; // ❌
     withFileTypes?: boolean; // ✅
     recursive?: boolean; // ✅
+    concurrency?: number; // ✨
   };
   ```
-- **Return Type Diff**: `Buffer` return not supported yet.
-- **Performance**: TBD
-- **Supported Version**: TBD
-- **Notes**:
-  - ✨ Supports `options.concurrency` to control parallelism.
+- **Return Type**:
+  ```ts
+    string[]
+    | {
+      name: string, // ✅
+      parentPath: string, // ✅
+      isDir: boolean // ✅
+    }[]
+  ```
 
 ### `readFile`
 
@@ -64,7 +69,21 @@ We are rewriting `fs` APIs one by one.
 
 ### `rm`
 
-- **Status**: ❌
+- **Node.js Arguments**:
+  ```ts
+  path: string; // ✅
+  options?: {
+    force?: boolean; // ✅
+    maxRetries?: number; // ❌
+    recursive?: boolean; // ✅
+    retryDelay?: number; // ❌
+    concurrency?: number; // ✨
+  };
+  ```
+- **Return Type**:
+  ```ts
+    void
+  ```
 
 ### `rmdir`
 

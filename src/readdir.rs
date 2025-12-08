@@ -5,15 +5,21 @@ use napi_derive::napi;
 use std::fs;
 use std::path::Path;
 
-// basic usage
-// ls('./node_modules')
-
-// advanced usage
-// readdirSync('./src', {
-//   recursive: true,
-//   concurrency: 8,
-//   ignore: ['.git'],
-// });
+// # nodejs readdir jsdoc:
+/**
+ * Reads the contents of a directory.
+ * @param {string | Buffer | URL} path
+ * @param {string | {
+ *   encoding?: string;
+ *   withFileTypes?: boolean;
+ *   recursive?: boolean;
+ *   }} [options]
+ * @param {(
+ *   err?: Error,
+ *   files?: string[] | Buffer[] | Dirent[]
+ * ) => any} callback
+ * @returns {void}
+ */
 
 #[napi(object)]
 #[derive(Clone)]
@@ -41,7 +47,7 @@ fn ls(
   let path = Path::new(search_path_str);
   if !Path::new(&path).exists() {
     return Err(Error::from_reason(format!(
-      "ENOENT: no such file or directory, scandir '{}'",
+      "ENOENT: no such file or directory, readdir '{}'",
       path.to_string_lossy()
     )));
   }

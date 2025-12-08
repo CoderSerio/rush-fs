@@ -8,6 +8,19 @@ export interface Dirent {
 
 export declare function readdir(path: string, options?: ReaddirOptions | undefined | null): Promise<unknown>
 
+/** * Reads the contents of a directory.
+ * @param {string | Buffer | URL} path
+ * @param {string | {
+ *   encoding?: string;
+ *   withFileTypes?: boolean;
+ *   recursive?: boolean;
+ *   }} [options]
+ * @param {(
+ *   err?: Error,
+ *   files?: string[] | Buffer[] | Dirent[]
+ * ) => any} callback
+ * @returns {void}
+ */
 export interface ReaddirOptions {
   skipHidden?: boolean
   concurrency?: number
@@ -19,3 +32,27 @@ export declare function readdirSync(
   path: string,
   options?: ReaddirOptions | undefined | null,
 ): Array<string> | Array<Dirent>
+
+export declare function rm(path: string, options?: RmOptions | undefined | null): Promise<unknown>
+
+/** * Asynchronously removes files and
+ * directories (modeled on the standard POSIX `rm` utility).
+ * @param {string | Buffer | URL} path
+ * @param {{
+ *   force?: boolean;
+ *   maxRetries?: number;
+ *   recursive?: boolean;
+ *   retryDelay?: number;
+ *   }} [options]
+ * @param {(err?: Error) => any} callback
+ * @returns {void}
+ */
+export interface RmOptions {
+  force?: boolean
+  maxRetries?: number
+  recursive?: boolean
+  retryDelay?: number
+  concurrency?: number
+}
+
+export declare function rmSync(path: string, options?: RmOptions | undefined | null): void

@@ -574,3 +574,5 @@ if (!nativeBinding) {
 module.exports = nativeBinding
 module.exports.readdir = nativeBinding.readdir
 module.exports.readdirSync = nativeBinding.readdirSync
+module.exports.rm = nativeBinding.rm
+module.exports.rmSync = nativeBinding.rmSync
