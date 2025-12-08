@@ -64,14 +64,16 @@
     "@types/node": "^20.0.0",
     "ava": "^6.4.1",
     "chalk": "^5.6.2",
+    "fast-glob": "^3.3.3",
+    "glob": "^13.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
+    "mitata": "^1.0.34",
     "npm-run-all2": "^8.0.4",
     "oxlint": "^1.14.0",
     "prettier": "^3.6.2",
     "tinybench": "^5.0.1",
-    "typescript": "^5.9.2",
-    "mitata": "^1.0.34"
+    "typescript": "^5.9.2"
   },
   "lint-staged": {
     "*.@(js|ts|tsx)": [
@@ -105,5 +107,5 @@
     "singleQuote": true,
     "arrowParens": "always"
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@^9 || pnpm@^10"
 }

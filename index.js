@@ -573,6 +573,8 @@ if (!nativeBinding) {
 
 module.exports = nativeBinding
 module.exports.Dirent = nativeBinding.Dirent
+module.exports.glob = nativeBinding.glob
+module.exports.globSync = nativeBinding.globSync
 module.exports.readdir = nativeBinding.readdir
 module.exports.readdirSync = nativeBinding.readdirSync
 module.exports.rm = nativeBinding.rm

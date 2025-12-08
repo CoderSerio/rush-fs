@@ -10,12 +10,14 @@
 #![deny(clippy::all)]
 
 // define modules
+pub mod glob;
 pub mod readdir;
 pub mod rm;
 pub mod types;
 pub mod utils;
 
 //export modules
+pub use glob::*;
 pub use readdir::*;
 pub use rm::*;
 pub use types::*;

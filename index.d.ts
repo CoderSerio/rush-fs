@@ -13,6 +13,21 @@ export declare class Dirent {
   get path(): string
 }
 
+export declare function glob(pattern: string, options?: GlobOptions | undefined | null): Promise<unknown>
+
+export interface GlobOptions {
+  cwd?: string
+  withFileTypes?: boolean
+  exclude?: Array<string>
+  concurrency?: number
+  gitIgnore?: boolean
+}
+
+export declare function globSync(
+  pattern: string,
+  options?: GlobOptions | undefined | null,
+): Array<string> | Array<Dirent>
+
 export declare function readdir(path: string, options?: ReaddirOptions | undefined | null): Promise<unknown>
 
 /** * Reads the contents of a directory.
