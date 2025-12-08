@@ -33,7 +33,7 @@ pub fn glob_sync(
   let with_file_types = opts.with_file_types.unwrap_or(false);
   let concurrency = opts.concurrency.unwrap_or(4) as usize;
 
-  // 1. Build match rules (Matcher)
+  // Build match rules (Matcher)
   // ignore crate handles glob patterns via override
   let mut override_builder = OverrideBuilder::new(&cwd);
   override_builder
@@ -54,18 +54,13 @@ pub fn glob_sync(
     .build()
     .map_err(|e| Error::from_reason(e.to_string()))?;
 
-  // 2. Build parallel walker (Walker)
   let mut builder = WalkBuilder::new(&cwd);
   builder
     .overrides(overrides) // Apply glob patterns
     .standard_filters(opts.git_ignore.unwrap_or(true)) // Automatically handle .gitignore, .ignore etc
     .threads(concurrency); // Core: Enable multithreading with one line!
 
-  // 3. Collect results
-  // Since it's multithreaded, we need a thread-safe container to store results
   // We use two vectors to avoid enum overhead in the lock if possible, but Mutex<Vec<T>> is easier
-  // Let's use an enum wrapper or just two mutexes? Or just one mutex with enum?
-  // Let's stick to the structure:
   let result_strings = Arc::new(Mutex::new(Vec::new()));
   let result_dirents = Arc::new(Mutex::new(Vec::new()));
 
@@ -74,7 +69,6 @@ pub fn glob_sync(
 
   let root_path = Path::new(&cwd).to_path_buf();
 
-  // 4. Start parallel traversal
   builder.build_parallel().run(move || {
     let result_strings = result_strings_clone.clone();
     let result_dirents = result_dirents_clone.clone();
@@ -121,7 +115,6 @@ pub fn glob_sync(
               .to_string_lossy()
               .to_string();
 
-            // entry.file_type() is usually cached and efficient
             let file_type = if let Some(ft) = entry.file_type() {
               get_file_type_id(&ft)
             } else {
@@ -161,7 +154,7 @@ pub fn glob_sync(
   }
 }
 
-// Async version task
+// ===== Async version =====
 pub struct GlobTask {
   pub pattern: String,
   pub options: Option<GlobOptions>,
