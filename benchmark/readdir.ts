@@ -1,42 +1,42 @@
-import { Bench } from 'tinybench'
+import { run, bench, group } from 'mitata'
 import * as fs from 'node:fs'
-import { readdirSync } from '../index.js'
 import * as path from 'node:path'
+import { readdirSync } from '../index.js'
 
-const bench = new Bench({ time: 1000 })
 const targetDir = path.resolve(process.cwd(), 'node_modules')
+// Fallback to current directory if node_modules doesn't exist
 const dir = fs.existsSync(targetDir) ? targetDir : process.cwd()
 
 console.log(`Benchmarking readdir on: ${dir}`)
+try {
+  const count = fs.readdirSync(dir).length
+  console.log(`File count in target dir: ${count}`)
+} catch {}
 
-bench
-  .add('Node.js fs.readdirSync', () => {
-    fs.readdirSync(dir)
-  })
-  .add('Node.js fs.readdirSync (withFileTypes)', () => {
-    fs.readdirSync(dir, { withFileTypes: true })
-  })
-  .add('Node.js fs.readdirSync (recursive, withFileTypes)', () => {
-    fs.readdirSync(dir, { recursive: true, withFileTypes: true })
-  })
-  .add('hyper-fs readdirSync (default)', () => {
-    readdirSync(dir)
-  })
-  .add('hyper-fs readdirSync (withFileTypes)', () => {
-    readdirSync(dir, { withFileTypes: true })
-  })
-  .add('hyper-fs readdirSync (recursive)', () => {
-    readdirSync(dir, { recursive: true })
-  })
-  .add('hyper-fs readdirSync (recursive, withFileTypes)', () => {
-    readdirSync(dir, { recursive: true, withFileTypes: true })
-  })
-  .add('hyper-fs readdirSync (4 threads, recursive)', () => {
-    readdirSync(dir, { concurrency: 4, recursive: true })
-  })
-  .add('hyper-fs readdirSync (4 threads, recursive, withFileTypes)', () => {
-    readdirSync(dir, { concurrency: 4, recursive: true, withFileTypes: true })
-  })
-await bench.run()
+// 1. Basic readdir
+group('Readdir (names only)', () => {
+  bench('Node.js', () => fs.readdirSync(dir)).baseline()
+  bench('Hyper-FS', () => readdirSync(dir))
+})
 
-console.table(bench.table())
+// 2. With File Types
+group('Readdir (withFileTypes)', () => {
+  bench('Node.js', () => fs.readdirSync(dir, { withFileTypes: true })).baseline()
+  bench('Hyper-FS', () => readdirSync(dir, { withFileTypes: true }))
+})
+
+// 3. Recursive + withFileTypes
+group('Readdir (recursive + withFileTypes)', () => {
+  bench('Node.js', () => fs.readdirSync(dir, { recursive: true, withFileTypes: true })).baseline()
+  bench('Hyper-FS', () => readdirSync(dir, { recursive: true, withFileTypes: true }))
+})
+
+// 4. Concurrency (Hyper-FS only comparison)
+group('Hyper-FS Concurrency', () => {
+  bench('Default (Auto)', () => readdirSync(dir, { recursive: true })).baseline()
+  bench('4 Threads', () => readdirSync(dir, { recursive: true, concurrency: 4 }))
+})
+
+await run({
+  colors: true,
+})
