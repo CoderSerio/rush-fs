@@ -9,7 +9,6 @@ pub struct Dirent {
   pub name: String,
   #[napi(readonly, js_name = "parentPath")]
   pub parent_path: String,
-  // We store type info internally
   // 1: file, 2: dir, 3: symlink, 4: block, 5: char, 6: fifo, 7: socket, 0: unknown
   pub(crate) file_type: u8,
 }
