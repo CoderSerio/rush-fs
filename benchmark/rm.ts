@@ -12,6 +12,15 @@ if (fs.existsSync(baseDir)) {
 }
 fs.mkdirSync(baseDir)
 
+/**
+ * Create a flat directory containing a specified number of files.
+ *
+ * Ensures the target directory exists and writes `count` files named
+ * `file-0.txt` through `file-(count-1).txt`, each containing the string "content".
+ *
+ * @param dir - The directory path where files will be created
+ * @param count - The number of files to create (non-negative integer)
+ */
 function createFlatStructure(dir: string, count: number) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
   for (let i = 0; i < count; i++) {
@@ -19,6 +28,15 @@ function createFlatStructure(dir: string, count: number) {
   }
 }
 
+/**
+ * Creates a chain of nested subdirectories under the given root and places a file in each level.
+ *
+ * Ensures the root directory exists, then creates `depth` nested directories named `depth-0`, `depth-1`, ...,
+ * and writes a file named `file.txt` containing "content" into each created subdirectory.
+ *
+ * @param dir - The root directory under which the nested structure will be created
+ * @param depth - The number of nested subdirectory levels to create
+ */
 function createDeepStructure(dir: string, depth: number) {
   let current = dir
   if (!fs.existsSync(current)) fs.mkdirSync(current, { recursive: true })
@@ -29,6 +47,15 @@ function createDeepStructure(dir: string, depth: number) {
   }
 }
 
+/**
+ * Runs a benchmark group that compares multiple rmSync implementations and prints a Mitata-like comparison table.
+ *
+ * Executes a warmup run then performs 10 timed iterations per implementation using the provided setup function to create
+ * each test directory (setup time is excluded from measurements). For each implementation it computes the average time
+ * in milliseconds and prints each implementation's average alongside a ratio compared to the first (baseline).
+ *
+ * @param setupFn - A function that creates the test directory structure at the given path before removal
+ */
 async function runGroup(groupName: string, setupFn: (dir: string) => void) {
   console.log(`\n${groupName}`)
 
@@ -84,6 +111,11 @@ async function runGroup(groupName: string, setupFn: (dir: string) => void) {
   })
 }
 
+/**
+ * Execute the benchmark suite for the two test scenarios and remove temporary data.
+ *
+ * Runs the "Flat directory (2000 files)" and "Deep nested directory (depth 100)" benchmark groups sequentially, then deletes the temporary base directory if it exists.
+ */
 async function run() {
   await runGroup('Flat directory (2000 files)', (dir) => createFlatStructure(dir, 2000))
   await runGroup('Deep nested directory (depth 100)', (dir) => createDeepStructure(dir, 100))

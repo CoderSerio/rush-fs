@@ -33,6 +33,31 @@ pub struct ReaddirOptions {
 }
 
 // #[napi] // marco: expose the function to Node
+/// Read directory entries from `path_str` according to the provided `options`.
+///
+/// The function performs a non-recursive or recursive directory listing based on `options.recursive`.
+/// Hidden entries may be skipped when `options.skip_hidden` is true. When `options.with_file_types`
+/// is true the results include `Dirent` objects with `name`, `parent_path`, and `is_dir`; otherwise
+/// the results are plain file path strings (non-recursive: entry names; recursive: paths relative
+/// to the provided root).
+///
+/// # Returns
+///
+/// `Ok(Either::A(Vec<String>))` with entry names or relative paths when `with_file_types` is false,
+/// or `Ok(Either::B(Vec<Dirent>))` with `Dirent` objects when `with_file_types` is true. Returns
+/// `Err` when the path does not exist or an underlying IO error occurs (error message contains
+/// the underlying reason).
+///
+/// # Examples
+///
+/// ```
+/// // Non-recursive list of names
+/// let res = ls(".".to_string(), None).unwrap();
+/// match res {
+///   Either::A(names) => println!("names: {:?}", names),
+///   Either::B(dirents) => println!("dirents: {:?}", dirents),
+/// }
+/// ```
 fn ls(
   path_str: String,
   options: Option<ReaddirOptions>,
