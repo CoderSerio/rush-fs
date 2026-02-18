@@ -5,20 +5,15 @@ use rayon::prelude::*;
 use std::fs;
 use std::path::Path;
 
-// nodejs rm jsdoc:
-/**
- * Asynchronously removes files and
- * directories (modeled on the standard POSIX `rm` utility).
- * @param {string | Buffer | URL} path
- * @param {{
- *   force?: boolean;
- *   maxRetries?: number;
- *   recursive?: boolean;
- *   retryDelay?: number;
- *   }} [options]
- * @param {(err?: Error) => any} callback
- * @returns {void}
- */
+/// Removes files and directories (modeled on the standard POSIX `rm` utility).
+///
+/// - `force`: When true, silently ignore errors when path does not exist.
+/// - `recursive`: When true, remove directory and all its contents.
+/// - `maxRetries`: If an `EBUSY`, `EMFILE`, `ENFILE`, `ENOTEMPTY`, or `EPERM` error is
+///   encountered, Node.js retries the operation with a linear backoff of `retryDelay` ms longer on
+///   each try. This option represents the number of retries.
+/// - `retryDelay`: The amount of time in milliseconds to wait between retries (default 100ms).
+/// - `concurrency` (hyper-fs extension): Number of parallel threads for recursive removal.
 
 #[napi(object)]
 #[derive(Clone)]
@@ -72,6 +67,23 @@ fn remove_recursive(path: &Path, opts: &RmOptions) -> Result<()> {
   Ok(())
 }
 
+fn remove_with_retry(path: &Path, opts: &RmOptions) -> Result<()> {
+  let max_retries = opts.max_retries.unwrap_or(0) as usize;
+  let retry_delay = opts.retry_delay.unwrap_or(100) as u64;
+
+  let mut last_err = None;
+  for attempt in 0..=max_retries {
+    if attempt > 0 {
+      std::thread::sleep(std::time::Duration::from_millis(retry_delay));
+    }
+    match remove_recursive(path, opts) {
+      Ok(()) => return Ok(()),
+      Err(e) => last_err = Some(e),
+    }
+  }
+  Err(last_err.unwrap())
+}
+
 fn remove(path_str: String, options: Option<RmOptions>) -> Result<()> {
   let path = Path::new(&path_str);
 
@@ -86,7 +98,6 @@ fn remove(path_str: String, options: Option<RmOptions>) -> Result<()> {
 
   if !path.exists() {
     if force {
-      // If force is true, silently succeed when path doesn't exist
       return Ok(());
     }
     return Err(Error::from_reason(format!(
@@ -95,7 +106,12 @@ fn remove(path_str: String, options: Option<RmOptions>) -> Result<()> {
     )));
   }
 
-  remove_recursive(path, &opts)
+  let max_retries = opts.max_retries.unwrap_or(0);
+  if max_retries > 0 {
+    remove_with_retry(path, &opts)
+  } else {
+    remove_recursive(path, &opts)
+  }
 }
 
 // ========= async version =========

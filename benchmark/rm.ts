@@ -6,7 +6,6 @@ import { rmSync as hyperRmSync } from '../index.js'
 const tmpDir = os.tmpdir()
 const baseDir = path.join(tmpDir, 'hyper-fs-bench-rm')
 
-// Clean up previous runs
 if (fs.existsSync(baseDir)) {
   fs.rmSync(baseDir, { recursive: true, force: true })
 }
@@ -29,69 +28,71 @@ function createDeepStructure(dir: string, depth: number) {
   }
 }
 
-async function runGroup(groupName: string, setupFn: (dir: string) => void) {
+function createTreeStructure(dir: string, breadth: number, depth: number) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  function build(current: string, level: number) {
+    if (level >= depth) return
+    for (let i = 0; i < breadth; i++) {
+      const sub = path.join(current, `d${level}-${i}`)
+      fs.mkdirSync(sub)
+      fs.writeFileSync(path.join(sub, 'file.txt'), 'content')
+      build(sub, level + 1)
+    }
+  }
+  build(dir, 0)
+}
+
+const implementations = [
+  { name: 'Node.js', fn: (p: string) => fs.rmSync(p, { recursive: true, force: true }) },
+  { name: 'Hyper-FS', fn: (p: string) => hyperRmSync(p, { recursive: true, force: true }) },
+  {
+    name: 'Hyper-FS (4 threads)',
+    fn: (p: string) => hyperRmSync(p, { recursive: true, force: true, concurrency: 4 }),
+  },
+]
+
+function runGroup(groupName: string, setupFn: (dir: string) => void) {
   console.log(`\n${groupName}`)
-
-  const implementations = [
-    { name: 'Node.js fs.rmSync', fn: (p: string) => fs.rmSync(p, { recursive: true, force: true }) },
-    { name: 'hyper-fs rmSync', fn: (p: string) => hyperRmSync(p, { recursive: true, force: true }) },
-    {
-      name: 'hyper-fs rmSync (4 threads)',
-      fn: (p: string) => hyperRmSync(p, { recursive: true, force: true, concurrency: 4 }),
-    },
-  ]
-
+  const iterations = 10
   const results: { name: string; time: number }[] = []
 
   for (const impl of implementations) {
     const times: number[] = []
-    const iterations = 10
 
-    // Warmup (1 run)
     const warmupDir = path.join(baseDir, `warmup-${impl.name.replace(/[^a-zA-Z0-9]/g, '')}`)
     setupFn(warmupDir)
     impl.fn(warmupDir)
 
     for (let i = 0; i < iterations; i++) {
       const testDir = path.join(baseDir, `${impl.name.replace(/[^a-zA-Z0-9]/g, '-')}-${i}`)
-      setupFn(testDir) // Setup time NOT included
+      setupFn(testDir)
 
       const start = process.hrtime.bigint()
-      impl.fn(testDir) // Measured time
+      impl.fn(testDir)
       const end = process.hrtime.bigint()
 
-      const ms = Number(end - start) / 1_000_000
-      times.push(ms)
+      times.push(Number(end - start) / 1_000_000)
     }
 
     const avg = times.reduce((a, b) => a + b, 0) / times.length
     results.push({ name: impl.name, time: avg })
   }
 
-  // Render Mitata-like output
-  // Example:
-  // Node.js fs.rmSync    10.50 ms  (baseline)
-  // hyper-fs rmSync      12.00 ms  1.14x (slower)
-
   const baseline = results[0]
-
-  results.forEach((res) => {
+  for (const res of results) {
     const isBaseline = res === baseline
     const ratio = res.time / baseline.time
     const diffStr = isBaseline ? '(baseline)' : `${ratio.toFixed(2)}x ${ratio > 1 ? '(slower)' : '(faster)'}`
-
-    console.log(`  ${res.name.padEnd(25)} ${res.time.toFixed(2)} ms  ${diffStr}`)
-  })
-}
-
-async function run() {
-  await runGroup('Flat directory (2000 files)', (dir) => createFlatStructure(dir, 2000))
-  await runGroup('Deep nested directory (depth 100)', (dir) => createDeepStructure(dir, 100))
-
-  // Clean up
-  if (fs.existsSync(baseDir)) {
-    fs.rmSync(baseDir, { recursive: true, force: true })
+    console.log(`  ${res.name.padEnd(25)} ${res.time.toFixed(3)} ms  ${diffStr}`)
   }
 }
 
-run()
+console.log('Benchmarking rm (destructive — manual iterations)')
+
+runGroup('Flat directory (2000 files)', (dir) => createFlatStructure(dir, 2000))
+runGroup('Deep nested directory (depth 100)', (dir) => createDeepStructure(dir, 100))
+runGroup('Tree structure (breadth=3, depth=4, ~120 nodes)', (dir) => createTreeStructure(dir, 3, 4))
+
+if (fs.existsSync(baseDir)) {
+  fs.rmSync(baseDir, { recursive: true, force: true })
+}

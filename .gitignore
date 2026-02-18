@@ -128,3 +128,10 @@ Cargo.lock
 !.yarn/sdks
 !.yarn/versions
 /npm
+
+
+# vibe coding 🤓
+.cursor/
+
+# 本地开发备忘，不进入版本控制
+TODO.md

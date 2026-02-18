@@ -152,7 +152,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
           path: .
@@ -208,7 +208,7 @@ jobs:
           pnpm config set supportedArchitectures.libc "[\"current\", \"musl\", \"gnu\"]" --json
           pnpm install
       - name: Download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: bindings-${{ matrix.target }}
           path: .
@@ -252,7 +252,7 @@ jobs:
       - name: create npm dirs
         run: pnpm napi create-npm-dirs
       - name: Download all artifacts
-        uses: actions/download-artifact@v4 # v4 is standard, v6 is user specific maybe? keeping consistent with other edits
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
       - name: Move artifacts

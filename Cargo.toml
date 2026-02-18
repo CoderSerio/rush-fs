@@ -1,6 +1,6 @@
 
 [package]
-authors = ["LongYinan <lynweklm@gmail.com>"]
+authors = []
 edition = "2021"
 name    = "hyper_fs"
 version = "0.1.0"
@@ -9,13 +9,18 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
+chrono         = { version = "0.4", features = ["clock"] }
+ignore         = "0.4.25"
 jwalk          = "0.8.1"
-napi           = "3.0.0"
+napi           = { version = "3.0.0", features = ["chrono_date"] }
 napi-derive    = "3.4"
 rayon          = "1.11.0"
 remove_dir_all = "1.0.0"
 serde          = "1.0.228"
 walkdir        = "2.5.0"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 
 [build-dependencies]
 napi-build = "2"

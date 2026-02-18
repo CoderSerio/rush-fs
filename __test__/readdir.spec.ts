@@ -1,4 +1,5 @@
 import test from 'ava'
+import * as nodeFs from 'node:fs'
 import { readdirSync, readdir } from '../index.js'
 
 test('sync: should list files in current directory (strings by default)', (t) => {
@@ -25,7 +26,9 @@ test('sync: should return Dirent objects when withFileTypes is true', (t) => {
   const first = files[0]
   if (typeof first === 'object') {
     t.is(typeof first.name, 'string')
-    t.is(typeof first.isDir, 'boolean')
+    // Dirent in Node.js (and our implementation) uses methods, not properties for type checking
+    t.is(typeof first.isDirectory, 'function')
+    t.is(typeof first.isFile, 'function')
   } else {
     t.fail('Should return objects when withFileTypes is true')
   }
@@ -34,12 +37,14 @@ test('sync: should return Dirent objects when withFileTypes is true', (t) => {
   t.truthy(packageJson, 'Result should contain package.json')
 
   if (typeof packageJson !== 'string' && packageJson) {
-    t.is(packageJson.isDir, false)
+    t.is(packageJson.isFile(), true)
+    t.is(packageJson.isDirectory(), false)
   }
 
   const srcDir = files.find((f) => typeof f !== 'string' && f.name === 'src')
   if (srcDir && typeof srcDir !== 'string') {
-    t.is(srcDir.isDir, true, 'src should be identified as a directory')
+    t.is(srcDir.isDirectory(), true, 'src should be identified as a directory')
+    t.is(srcDir.isFile(), false)
   }
 })
 
@@ -86,4 +91,38 @@ test('options: skip_hidden should filter out dotfiles', (t) => {
 test('error: should throw on non-existent directory', async (t) => {
   t.throws(() => readdirSync('./path/to/nowhere'))
   await t.throwsAsync(async () => await readdir('./path/to/nowhere'))
+})
+
+// ===== dual-run comparison =====
+
+test('dual-run: readdirSync names should match node:fs', (t) => {
+  const nodeResult = nodeFs.readdirSync('.').sort()
+  const hyperResult = (readdirSync('.') as string[]).sort()
+  t.deepEqual(hyperResult, nodeResult)
+})
+
+test('dual-run: readdirSync withFileTypes entry names should match node:fs', (t) => {
+  const nodeEntries = nodeFs.readdirSync('.', { withFileTypes: true })
+  const hyperEntries = readdirSync('.', { withFileTypes: true })
+
+  const nodeNames = nodeEntries.map((e) => e.name).sort()
+  const hyperNames = (hyperEntries as { name: string }[]).map((e) => e.name).sort()
+  t.deepEqual(hyperNames, nodeNames)
+})
+
+test('dual-run: readdirSync withFileTypes isFile/isDirectory should match', (t) => {
+  const nodeEntries = nodeFs.readdirSync('.', { withFileTypes: true })
+  const hyperEntries = readdirSync('.', { withFileTypes: true }) as {
+    name: string
+    isFile: () => boolean
+    isDirectory: () => boolean
+  }[]
+
+  for (const nodeEntry of nodeEntries) {
+    const hyperEntry = hyperEntries.find((e) => e.name === nodeEntry.name)
+    if (hyperEntry) {
+      t.is(hyperEntry.isFile(), nodeEntry.isFile(), `isFile mismatch for ${nodeEntry.name}`)
+      t.is(hyperEntry.isDirectory(), nodeEntry.isDirectory(), `isDirectory mismatch for ${nodeEntry.name}`)
+    }
+  }
 })

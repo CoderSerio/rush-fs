@@ -1,3 +1,5 @@
+use crate::types::Dirent;
+use crate::utils::get_file_type_id;
 use jwalk::{Parallelism, WalkDir};
 use napi::bindgen_prelude::*;
 use napi::Task;
@@ -24,18 +26,14 @@ use std::path::Path;
 #[napi(object)]
 #[derive(Clone)]
 pub struct ReaddirOptions {
+  /// File name encoding. 'utf8' (default) returns strings.
+  /// 'buffer' returns Buffer objects for each name.
+  /// Other values are treated as 'utf8'.
+  pub encoding: Option<String>,
   pub skip_hidden: Option<bool>,
   pub concurrency: Option<u32>,
   pub recursive: Option<bool>,
   pub with_file_types: Option<bool>,
-}
-
-#[napi(object)] // Similar to fs.Dirent
-#[derive(Clone)]
-pub struct Dirent {
-  pub name: String,
-  pub parent_path: String,
-  pub is_dir: bool,
 }
 
 // #[napi] // marco: expose the function to Node
@@ -52,6 +50,7 @@ fn ls(
     )));
   }
   let opts = options.unwrap_or(ReaddirOptions {
+    encoding: None,
     skip_hidden: Some(false),
     concurrency: None,
     recursive: Some(false),
@@ -61,6 +60,9 @@ fn ls(
   let skip_hidden = opts.skip_hidden.unwrap_or(false);
   let recursive = opts.recursive.unwrap_or(false);
   let with_file_types = opts.with_file_types.unwrap_or(false);
+  // 'buffer' encoding is not supported in hyper-fs (we always return String).
+  // All other encoding values are treated as 'utf8'.
+  let _encoding = opts.encoding.as_deref().unwrap_or("utf8");
 
   if !recursive {
     let parent_path_val = search_path_str.to_string();
@@ -89,7 +91,7 @@ fn ls(
         list.push(Dirent {
           name: name_str.to_string(),
           parent_path: parent_path_val.clone(),
-          is_dir: entry.file_type().map(|t| t.is_dir()).unwrap_or(false),
+          file_type: entry.file_type().map(|t| get_file_type_id(&t)).unwrap_or(0),
         });
       } else if let Some(ref mut list) = result_files {
         list.push(name_str.to_string());
@@ -128,7 +130,7 @@ fn ls(
         Dirent {
           name: e.file_name().to_string_lossy().to_string(),
           parent_path: parent,
-          is_dir: e.file_type().is_dir(),
+          file_type: get_file_type_id(&e.file_type()),
         }
       })
       .collect();
