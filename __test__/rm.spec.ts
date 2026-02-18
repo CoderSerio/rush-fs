@@ -1,6 +1,6 @@
 import test from 'ava'
 import { rmSync, rm } from '../index.js'
-import { mkdirSync, writeFileSync, existsSync } from 'node:fs'
+import { mkdirSync, writeFileSync, existsSync, rmSync as nodeRmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
@@ -214,4 +214,38 @@ test('async: should remove deep nested directory with concurrency', async (t) =>
   t.true(existsSync(testDir))
   await rm(testDir, { recursive: true, concurrency: 4 })
   t.false(existsSync(testDir))
+})
+
+// ===== dual-run comparison =====
+
+test('dual-run: rmSync file should behave same as node:fs', (t) => {
+  const dir = createTempDir()
+  const nodeFile = join(dir, 'node.txt')
+  const hyperFile = join(dir, 'hyper.txt')
+  writeFileSync(nodeFile, 'a')
+  writeFileSync(hyperFile, 'a')
+
+  t.is(existsSync(hyperFile), existsSync(nodeFile))
+
+  nodeRmSync(nodeFile)
+  rmSync(hyperFile)
+
+  t.is(existsSync(hyperFile), existsSync(nodeFile))
+})
+
+test('dual-run: rmSync recursive should behave same as node:fs', (t) => {
+  const dir1 = createTempDir()
+  const dir2 = createTempDir()
+  const nodeDir = join(dir1, 'sub')
+  const hyperDir = join(dir2, 'sub')
+
+  mkdirSync(nodeDir, { recursive: true })
+  mkdirSync(hyperDir, { recursive: true })
+  writeFileSync(join(nodeDir, 'f.txt'), 'x')
+  writeFileSync(join(hyperDir, 'f.txt'), 'x')
+
+  nodeRmSync(nodeDir, { recursive: true, force: true })
+  rmSync(hyperDir, { recursive: true, force: true })
+
+  t.is(existsSync(hyperDir), existsSync(nodeDir))
 })

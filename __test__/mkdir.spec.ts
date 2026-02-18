@@ -1,5 +1,6 @@
 import test from 'ava'
 import { mkdirSync, mkdir, rmdirSync } from '../index.js'
+import * as nodeFs from 'node:fs'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -56,4 +57,37 @@ test('mkdir: async recursive', async (t) => {
   rmdirSync(join(dir, 'x', 'y'))
   rmdirSync(join(dir, 'x'))
   rmdirSync(dir)
+})
+
+// ===== dual-run comparison =====
+
+test('dual-run: mkdirSync recursive should create same structure as node:fs', (t) => {
+  const nodeDir = tmpPath('node-recursive')
+  const hyperDir = tmpPath('hyper-recursive')
+
+  nodeFs.mkdirSync(join(nodeDir, 'a', 'b'), { recursive: true })
+  mkdirSync(join(hyperDir, 'a', 'b'), { recursive: true })
+
+  t.is(existsSync(join(nodeDir, 'a', 'b')), existsSync(join(hyperDir, 'a', 'b')))
+  t.is(existsSync(join(nodeDir, 'a')), existsSync(join(hyperDir, 'a')))
+
+  nodeFs.rmSync(nodeDir, { recursive: true })
+  nodeFs.rmSync(hyperDir, { recursive: true })
+})
+
+test('dual-run: mkdirSync should return first created path like node:fs', (t) => {
+  const nodeDir = tmpPath('node-return')
+  const hyperDir = tmpPath('hyper-return')
+
+  const nodeResult = nodeFs.mkdirSync(join(nodeDir, 'a', 'b'), { recursive: true })
+  const hyperResult = mkdirSync(join(hyperDir, 'a', 'b'), { recursive: true })
+
+  t.is(typeof hyperResult, typeof nodeResult)
+  if (nodeResult !== undefined && hyperResult !== undefined) {
+    t.true(nodeResult.endsWith('node-return'))
+    t.true(hyperResult.endsWith('hyper-return'))
+  }
+
+  nodeFs.rmSync(nodeDir, { recursive: true })
+  nodeFs.rmSync(hyperDir, { recursive: true })
 })

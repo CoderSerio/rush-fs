@@ -1,5 +1,6 @@
 import test from 'ava'
 import { truncateSync, truncate } from '../index.js'
+import * as nodeFs from 'node:fs'
 import { writeFileSync, readFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -35,4 +36,19 @@ test('truncate: async should truncate', async (t) => {
   await truncate(file, 5)
   const content = readFileSync(file, 'utf8')
   t.is(content, 'hello')
+})
+
+// ===== dual-run comparison =====
+
+test('dual-run: truncateSync should produce same result as node:fs', (t) => {
+  const nodeFile = tmpFile('node-trunc.txt')
+  const hyperFile = tmpFile('hyper-trunc.txt')
+
+  nodeFs.truncateSync(nodeFile, 5)
+  truncateSync(hyperFile, 5)
+
+  const nodeContent = readFileSync(nodeFile, 'utf8')
+  const hyperContent = readFileSync(hyperFile, 'utf8')
+  t.is(hyperContent, nodeContent)
+  t.is(hyperContent.length, nodeContent.length)
 })

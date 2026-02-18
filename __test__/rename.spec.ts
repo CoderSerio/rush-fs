@@ -1,5 +1,6 @@
 import test from 'ava'
 import { renameSync, rename } from '../index.js'
+import * as nodeFs from 'node:fs'
 import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -38,4 +39,23 @@ test('rename: async should rename a file', async (t) => {
 
   t.false(existsSync(src))
   t.true(existsSync(dest))
+})
+
+// ===== dual-run comparison =====
+
+test('dual-run: renameSync should produce same result as node:fs', (t) => {
+  const dir = tmpDir()
+  const nodeSrc = join(dir, 'node-src.txt')
+  const nodeDest = join(dir, 'node-dest.txt')
+  const hyperSrc = join(dir, 'hyper-src.txt')
+  const hyperDest = join(dir, 'hyper-dest.txt')
+  writeFileSync(nodeSrc, 'rename-test')
+  writeFileSync(hyperSrc, 'rename-test')
+
+  nodeFs.renameSync(nodeSrc, nodeDest)
+  renameSync(hyperSrc, hyperDest)
+
+  t.is(existsSync(hyperSrc), existsSync(nodeSrc))
+  t.is(existsSync(hyperDest), existsSync(nodeDest))
+  t.is(readFileSync(hyperDest, 'utf8'), readFileSync(nodeDest, 'utf8'))
 })

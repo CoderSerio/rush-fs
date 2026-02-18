@@ -1,5 +1,6 @@
 import test from 'ava'
 import { chmodSync, chmod, statSync } from '../index.js'
+import * as nodeFs from 'node:fs'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -40,4 +41,22 @@ test('chmod: async should change permissions', async (t) => {
   await chmod(file, 0o600)
   const s = statSync(file)
   t.is(s.mode & 0o777, 0o600)
+})
+
+// ===== dual-run comparison =====
+
+test('dual-run: chmodSync should produce same mode as node:fs', (t) => {
+  if (process.platform === 'win32') {
+    t.pass('Skipping chmod test on Windows')
+    return
+  }
+  const nodeFile = tmpFile('node-chmod.txt')
+  const hyperFile = tmpFile('hyper-chmod.txt')
+
+  nodeFs.chmodSync(nodeFile, 0o755)
+  chmodSync(hyperFile, 0o755)
+
+  const nodeStat = nodeFs.statSync(nodeFile)
+  const hyperStat = statSync(hyperFile)
+  t.is(hyperStat.mode & 0o777, nodeStat.mode & 0o777)
 })

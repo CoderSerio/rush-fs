@@ -1,6 +1,6 @@
 import test from 'ava'
 import { rmdirSync, rmdir, mkdirSync } from '../index.js'
-import { existsSync, writeFileSync, mkdirSync as nodeMkdirSync } from 'node:fs'
+import { existsSync, writeFileSync, mkdirSync as nodeMkdirSync, rmdirSync as nodeRmdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
@@ -37,4 +37,21 @@ test('rmdir: async should remove empty directory', async (t) => {
   mkdirSync(target)
   await rmdir(target)
   t.false(existsSync(target))
+})
+
+// ===== dual-run comparison =====
+
+test('dual-run: rmdirSync should leave same state as node:fs.rmdirSync', (t) => {
+  const dir1 = tmpDir('node-rmdir')
+  const dir2 = tmpDir('hyper-rmdir')
+  const nodeTarget = join(dir1, 'sub')
+  const hyperTarget = join(dir2, 'sub')
+
+  nodeMkdirSync(nodeTarget)
+  mkdirSync(hyperTarget)
+
+  nodeRmdirSync(nodeTarget)
+  rmdirSync(hyperTarget)
+
+  t.is(existsSync(hyperTarget), existsSync(nodeTarget))
 })
