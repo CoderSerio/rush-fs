@@ -5,7 +5,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hyper-fs/hyper-fs.git"
+    "url": "git+https://github.com/rush-fs/rush-fs.git"
   },
   "license": "MIT",
   "browser": "browser.js",
@@ -29,7 +29,7 @@
     "browser.js"
   ],
   "napi": {
-    "binaryName": "hyper-fs",
+    "binaryName": "rush-fs",
     "targets": [
       "x86_64-pc-windows-msvc",
       "x86_64-apple-darwin",
@@ -115,9 +115,9 @@
   },
   "packageManager": "pnpm@9.15.4",
   "optionalDependencies": {
-    "hyper-fs-win32-x64-msvc": "0.0.1",
-    "hyper-fs-darwin-x64": "0.0.1",
-    "hyper-fs-linux-x64-gnu": "0.0.1",
-    "hyper-fs-darwin-arm64": "0.0.1"
+    "rush-fs-win32-x64-msvc": "0.0.1",
+    "rush-fs-darwin-x64": "0.0.1",
+    "rush-fs-linux-x64-gnu": "0.0.1",
+    "rush-fs-darwin-arm64": "0.0.1"
   }
 }

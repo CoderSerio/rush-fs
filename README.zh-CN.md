@@ -1,23 +1,26 @@
-# Hyper-FS
+<div align="center">
+
+# Rush-FS
 
 [English](./README.md) | 中文
 
 <p align="center">
   <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
-  <img src="https://img.shields.io/npm/v/hyper-fs?style=flat-square" alt="NPM Version">
-  <img src="https://img.shields.io/npm/l/hyper-fs?style=flat-square" alt="License">
+  <img src="https://img.shields.io/npm/v/rush-fs?style=flat-square" alt="NPM Version">
+  <img src="https://img.shields.io/npm/l/rush-fs?style=flat-square" alt="License">
 </p>
 
 <p align="center">
   由 Rust 驱动的高性能 Node.js <code>fs</code> 模块「即插即用」替代品。
 </p>
+</div>
 
 ## 安装
 
 ```bash
-npm install hyper-fs
+npm install rush-fs
 # or
-pnpm add hyper-fs
+pnpm add rush-fs
 ```
 
 ## 状态与路线图
@@ -28,7 +31,7 @@ pnpm add hyper-fs
 >
 > - ✅：完全支持
 > - 🚧：部分支持 / 开发中
-> - ✨：hyper-fs 的新增能力
+> - ✨：rush-fs 的新增能力
 > - ❌：暂未支持
 
 ### `readdir`
@@ -314,7 +317,7 @@ pnpm add hyper-fs
 ## 用法
 
 ```ts
-import { readdir, stat, readFile, writeFile, mkdir, rm } from 'hyper-fs'
+import { readdir, stat, readFile, writeFile, mkdir, rm } from 'rush-fs'
 
 // 读取目录
 const files = await readdir('./src')
@@ -345,11 +348,11 @@ await rm('./temp', { recursive: true, force: true })
 > 测试环境：Apple Silicon (arm64)，Node.js 24.0.2，release 构建（开启 LTO）。
 > 运行 `pnpm build && pnpm bench` 可复现。
 
-### Hyper-FS 显著更快的场景
+### Rush-FS 显著更快的场景
 
 这些场景中 Rust 的并行遍历和零拷贝 I/O 发挥了真正优势：
 
-| 场景                                        | Node.js   | Hyper-FS | 加速比    |
+| 场景                                        | Node.js   | Rush-FS  | 加速比    |
 | ------------------------------------------- | --------- | -------- | --------- |
 | `readdir` 递归（node_modules，约 3 万条目） | 281 ms    | 23 ms    | **12x**   |
 | `glob` 递归（`**/*.rs`）                    | 25 ms     | 1.46 ms  | **17x**   |
@@ -366,27 +369,27 @@ await rm('./temp', { recursive: true, force: true })
 
 单文件操作有约 0.3 µs 的 napi 桥接开销，整体表现基本一致：
 
-| 场景                         | Node.js | Hyper-FS | 比率 |
-| ---------------------------- | ------- | -------- | ---- |
-| `stat`（单文件）             | 1.45 µs | 1.77 µs  | 1.2x |
-| `readFile` 小文件（Buffer）  | 8.86 µs | 9.46 µs  | 1.1x |
-| `writeFile` 小文件（string） | 74 µs   | 66 µs    | 0.9x |
-| `writeFile` 小文件（Buffer） | 115 µs  | 103 µs   | 0.9x |
-| `appendFile`                 | 30 µs   | 27 µs    | 0.9x |
+| 场景                         | Node.js | Rush-FS | 比率 |
+| ---------------------------- | ------- | ------- | ---- |
+| `stat`（单文件）             | 1.45 µs | 1.77 µs | 1.2x |
+| `readFile` 小文件（Buffer）  | 8.86 µs | 9.46 µs | 1.1x |
+| `writeFile` 小文件（string） | 74 µs   | 66 µs   | 0.9x |
+| `writeFile` 小文件（Buffer） | 115 µs  | 103 µs  | 0.9x |
+| `appendFile`                 | 30 µs   | 27 µs   | 0.9x |
 
 ### Node.js 更快的场景
 
 极轻量级的内置调用，napi 开销占比较大：
 
-| 场景                       | Node.js | Hyper-FS | 说明                     |
-| -------------------------- | ------- | -------- | ------------------------ |
-| `existsSync`（已存在文件） | 444 ns  | 1.34 µs  | Node.js 内部有 fast path |
-| `accessSync` F_OK          | 456 ns  | 1.46 µs  | 同上——napi 开销占主导    |
-| `writeFile` 4 MB string    | 2.93 ms | 5.69 ms  | 大字符串跨 napi 桥传输   |
+| 场景                       | Node.js | Rush-FS | 说明                     |
+| -------------------------- | ------- | ------- | ------------------------ |
+| `existsSync`（已存在文件） | 444 ns  | 1.34 µs | Node.js 内部有 fast path |
+| `accessSync` F_OK          | 456 ns  | 1.46 µs | 同上——napi 开销占主导    |
+| `writeFile` 4 MB string    | 2.93 ms | 5.69 ms | 大字符串跨 napi 桥传输   |
 
 ### 并行支持
 
-Hyper-FS 在文件系统遍历类操作中使用多线程并行：
+Rush-FS 在文件系统遍历类操作中使用多线程并行：
 
 | API               | 并行库                                                                    | `concurrency` 选项 | 默认值 |
 | ----------------- | ------------------------------------------------------------------------- | ------------------ | ------ |
@@ -399,15 +402,15 @@ Hyper-FS 在文件系统遍历类操作中使用多线程并行：
 
 ### 核心结论
 
-**Hyper-FS 在递归/批量文件系统操作上表现卓越**（readdir、glob、rm、cp），Rust 的并行遍历器带来 2–70 倍加速。单文件操作与 Node.js 基本持平。napi 桥接带来固定约 0.3 µs 的每次调用开销，仅在亚微秒级操作（如 `existsSync`）中有感知。
+**Rush-FS 在递归/批量文件系统操作上表现卓越**（readdir、glob、rm、cp），Rust 的并行遍历器带来 2–70 倍加速。单文件操作与 Node.js 基本持平。napi 桥接带来固定约 0.3 µs 的每次调用开销，仅在亚微秒级操作（如 `existsSync`）中有感知。
 
 **`cp` 基准详情**（Apple Silicon，release 构建）：
 
-| 场景                                  | Node.js   | Hyper-FS 1 线程 | Hyper-FS 4 线程 | Hyper-FS 8 线程 |
-| ------------------------------------- | --------- | --------------- | --------------- | --------------- |
-| 平铺目录（500 文件）                  | 86.45 ms  | 61.56 ms        | 32.88 ms        | 36.67 ms        |
-| 树形目录（宽度=4，深度=3，~84 节点）  | 23.80 ms  | 16.94 ms        | 10.62 ms        | 9.76 ms         |
-| 树形目录（宽度=3，深度=5，~363 节点） | 108.73 ms | 75.39 ms        | 46.88 ms        | 46.18 ms        |
+| 场景                                  | Node.js   | Rush-FS 1 线程 | Rush-FS 4 线程 | Rush-FS 8 线程 |
+| ------------------------------------- | --------- | -------------- | -------------- | -------------- |
+| 平铺目录（500 文件）                  | 86.45 ms  | 61.56 ms       | 32.88 ms       | 36.67 ms       |
+| 树形目录（宽度=4，深度=3，~84 节点）  | 23.80 ms  | 16.94 ms       | 10.62 ms       | 9.76 ms        |
+| 树形目录（宽度=3，深度=5，~363 节点） | 108.73 ms | 75.39 ms       | 46.88 ms       | 46.18 ms       |
 
 `cp` 的最优并发数在 Apple Silicon 上为 **4 线程**——超过后受 I/O 带宽限制，收益趋于平稳。
 

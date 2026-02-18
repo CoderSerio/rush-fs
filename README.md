@@ -1,21 +1,24 @@
-# Hyper-FS
+<div align="center">
+
+# Rush-FS
 
 <p align="center">
   <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
-  <img src="https://img.shields.io/npm/v/hyper-fs?style=flat-square" alt="NPM Version">
-  <img src="https://img.shields.io/npm/l/hyper-fs?style=flat-square" alt="License">
+  <img src="https://img.shields.io/npm/v/rush-fs?style=flat-square" alt="NPM Version">
+  <img src="https://img.shields.io/npm/l/rush-fs?style=flat-square" alt="License">
 </p>
 
 <p align="center">
   A high-performance, drop-in replacement for Node.js <code>fs</code> module, powered by Rust.
 </p>
+</div>
 
 ## Installation
 
 ```bash
-npm install hyper-fs
+npm install rush-fs
 # or
-pnpm add hyper-fs
+pnpm add rush-fs
 ```
 
 ## Status & Roadmap
@@ -26,7 +29,7 @@ We are rewriting `fs` APIs one by one.
 >
 > - ✅: Fully Supported
 > - 🚧: Partially Supported / WIP
-> - ✨：New feature from hyper-fs
+> - ✨：New feature from rush-fs
 > - ❌: Not Supported Yet
 
 ### `readdir`
@@ -312,7 +315,7 @@ We are rewriting `fs` APIs one by one.
 ## Usage
 
 ```ts
-import { readdir, stat, readFile, writeFile, mkdir, rm } from 'hyper-fs'
+import { readdir, stat, readFile, writeFile, mkdir, rm } from 'rush-fs'
 
 // Read directory
 const files = await readdir('./src')
@@ -343,11 +346,11 @@ await rm('./temp', { recursive: true, force: true })
 > Tested on Apple Silicon (arm64), Node.js 24.0.2, release build with LTO.
 > Run `pnpm build && pnpm bench` to reproduce.
 
-### Where Hyper-FS Shines
+### Where Rush-FS Shines
 
 These are the scenarios where Rust's parallelism and zero-copy I/O make a real difference:
 
-| Scenario                                         | Node.js   | Hyper-FS | Speedup   |
+| Scenario                                         | Node.js   | Rush-FS  | Speedup   |
 | ------------------------------------------------ | --------- | -------- | --------- |
 | `readdir` recursive (node_modules, ~30k entries) | 281 ms    | 23 ms    | **12x**   |
 | `glob` recursive (`**/*.rs`)                     | 25 ms     | 1.46 ms  | **17x**   |
@@ -364,27 +367,27 @@ These are the scenarios where Rust's parallelism and zero-copy I/O make a real d
 
 Single-file operations have a ~0.3 µs napi bridge overhead, making them roughly equivalent:
 
-| Scenario                   | Node.js | Hyper-FS | Ratio |
-| -------------------------- | ------- | -------- | ----- |
-| `stat` (single file)       | 1.45 µs | 1.77 µs  | 1.2x  |
-| `readFile` small (Buffer)  | 8.86 µs | 9.46 µs  | 1.1x  |
-| `writeFile` small (string) | 74 µs   | 66 µs    | 0.9x  |
-| `writeFile` small (Buffer) | 115 µs  | 103 µs   | 0.9x  |
-| `appendFile`               | 30 µs   | 27 µs    | 0.9x  |
+| Scenario                   | Node.js | Rush-FS | Ratio |
+| -------------------------- | ------- | ------- | ----- |
+| `stat` (single file)       | 1.45 µs | 1.77 µs | 1.2x  |
+| `readFile` small (Buffer)  | 8.86 µs | 9.46 µs | 1.1x  |
+| `writeFile` small (string) | 74 µs   | 66 µs   | 0.9x  |
+| `writeFile` small (Buffer) | 115 µs  | 103 µs  | 0.9x  |
+| `appendFile`               | 30 µs   | 27 µs   | 0.9x  |
 
 ### Where Node.js Wins
 
 Lightweight built-in calls where napi overhead is proportionally large:
 
-| Scenario                     | Node.js | Hyper-FS | Note                              |
-| ---------------------------- | ------- | -------- | --------------------------------- |
-| `existsSync` (existing file) | 444 ns  | 1.34 µs  | Node.js internal fast path        |
-| `accessSync` F_OK            | 456 ns  | 1.46 µs  | Same — napi overhead dominates    |
-| `writeFile` 4 MB string      | 2.93 ms | 5.69 ms  | Large string crossing napi bridge |
+| Scenario                     | Node.js | Rush-FS | Note                              |
+| ---------------------------- | ------- | ------- | --------------------------------- |
+| `existsSync` (existing file) | 444 ns  | 1.34 µs | Node.js internal fast path        |
+| `accessSync` F_OK            | 456 ns  | 1.46 µs | Same — napi overhead dominates    |
+| `writeFile` 4 MB string      | 2.93 ms | 5.69 ms | Large string crossing napi bridge |
 
 ### Parallelism
 
-Hyper-FS uses multi-threaded parallelism for operations that traverse the filesystem:
+Rush-FS uses multi-threaded parallelism for operations that traverse the filesystem:
 
 | API                   | Library                                                                   | `concurrency` option | Default |
 | --------------------- | ------------------------------------------------------------------------- | -------------------- | ------- |
@@ -397,15 +400,15 @@ Single-file operations (`stat`, `readFile`, `writeFile`, `chmod`, etc.) are atom
 
 ### Key Takeaway
 
-**Hyper-FS excels at recursive / batch filesystem operations** (readdir, glob, rm, cp) where Rust's parallel walkers deliver 2–70x speedups. For single-file operations it performs on par with Node.js. The napi bridge adds a fixed ~0.3 µs overhead per call, which only matters for sub-microsecond operations like `existsSync`.
+**Rush-FS excels at recursive / batch filesystem operations** (readdir, glob, rm, cp) where Rust's parallel walkers deliver 2–70x speedups. For single-file operations it performs on par with Node.js. The napi bridge adds a fixed ~0.3 µs overhead per call, which only matters for sub-microsecond operations like `existsSync`.
 
 **`cp` benchmark detail** (Apple Silicon, release build):
 
-| Scenario                                  | Node.js   | Hyper-FS 1T | Hyper-FS 4T | Hyper-FS 8T |
-| ----------------------------------------- | --------- | ----------- | ----------- | ----------- |
-| Flat dir (500 files)                      | 86.45 ms  | 61.56 ms    | 32.88 ms    | 36.67 ms    |
-| Tree dir (breadth=4, depth=3, ~84 nodes)  | 23.80 ms  | 16.94 ms    | 10.62 ms    | 9.76 ms     |
-| Tree dir (breadth=3, depth=5, ~363 nodes) | 108.73 ms | 75.39 ms    | 46.88 ms    | 46.18 ms    |
+| Scenario                                  | Node.js   | Rush-FS 1T | Rush-FS 4T | Rush-FS 8T |
+| ----------------------------------------- | --------- | ---------- | ---------- | ---------- |
+| Flat dir (500 files)                      | 86.45 ms  | 61.56 ms   | 32.88 ms   | 36.67 ms   |
+| Tree dir (breadth=4, depth=3, ~84 nodes)  | 23.80 ms  | 16.94 ms   | 10.62 ms   | 9.76 ms    |
+| Tree dir (breadth=3, depth=5, ~363 nodes) | 108.73 ms | 75.39 ms   | 46.88 ms   | 46.18 ms   |
 
 Optimal concurrency for `cp` is **4 threads** on Apple Silicon — beyond that, I/O bandwidth becomes the bottleneck and diminishing returns set in.
 

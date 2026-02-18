@@ -60,7 +60,7 @@ fn ls(
   let skip_hidden = opts.skip_hidden.unwrap_or(false);
   let recursive = opts.recursive.unwrap_or(false);
   let with_file_types = opts.with_file_types.unwrap_or(false);
-  // 'buffer' encoding is not supported in hyper-fs (we always return String).
+  // 'buffer' encoding is not supported in rush-fs (we always return String).
   // All other encoding values are treated as 'utf8'.
   let _encoding = opts.encoding.as_deref().unwrap_or("utf8");
 

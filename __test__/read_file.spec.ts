@@ -13,7 +13,7 @@ test('readFileSync: should read file as Buffer by default', (t) => {
 test('readFileSync: should read file as string with encoding=utf8', (t) => {
   const result = readFileSync('./package.json', { encoding: 'utf8' })
   t.is(typeof result, 'string')
-  t.true((result as string).includes('hyper-fs'))
+  t.true((result as string).includes('rush-fs'))
 })
 
 test('readFileSync: should match node:fs readFileSync', (t) => {
@@ -29,7 +29,7 @@ test('readFileSync: should throw on non-existent file', (t) => {
 test('readFile: async should read file', async (t) => {
   const result = await readFile('./package.json', { encoding: 'utf8' })
   t.is(typeof result, 'string')
-  t.true((result as string).includes('hyper-fs'))
+  t.true((result as string).includes('rush-fs'))
 })
 
 test('readFile: async should throw on non-existent file', async (t) => {

@@ -16,23 +16,23 @@ try {
 // 1. Basic readdir
 group('Readdir (names only)', () => {
   bench('Node.js', () => fs.readdirSync(dir)).baseline()
-  bench('Hyper-FS', () => readdirSync(dir))
+  bench('Rush-FS', () => readdirSync(dir))
 })
 
 // 2. With File Types
 group('Readdir (withFileTypes)', () => {
   bench('Node.js', () => fs.readdirSync(dir, { withFileTypes: true })).baseline()
-  bench('Hyper-FS', () => readdirSync(dir, { withFileTypes: true }))
+  bench('Rush-FS', () => readdirSync(dir, { withFileTypes: true }))
 })
 
 // 3. Recursive + withFileTypes
 group('Readdir (recursive + withFileTypes)', () => {
   bench('Node.js', () => fs.readdirSync(dir, { recursive: true, withFileTypes: true })).baseline()
-  bench('Hyper-FS', () => readdirSync(dir, { recursive: true, withFileTypes: true }))
+  bench('Rush-FS', () => readdirSync(dir, { recursive: true, withFileTypes: true }))
 })
 
-// 4. Concurrency (Hyper-FS only comparison)
-group('Hyper-FS Concurrency', () => {
+// 4. Concurrency (Rush-FS only comparison)
+group('Rush-FS Concurrency', () => {
   bench('Default (Auto)', () => readdirSync(dir, { recursive: true })).baseline()
   bench('4 Threads', () => readdirSync(dir, { recursive: true, concurrency: 4 }))
 })

@@ -14,7 +14,7 @@ pub struct CpOptions {
   pub preserve_timestamps: Option<bool>,
   pub dereference: Option<bool>,
   pub verbatim_symlinks: Option<bool>,
-  /// Hyper-FS extension: number of parallel threads for recursive copy.
+  /// Rush-FS extension: number of parallel threads for recursive copy.
   /// 0 or 1 means sequential; > 1 enables rayon parallel traversal.
   pub concurrency: Option<u32>,
 }

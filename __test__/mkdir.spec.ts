@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
 function tmpPath(name: string): string {
-  return join(tmpdir(), `hyper-fs-test-mkdir-${Date.now()}-${name}`)
+  return join(tmpdir(), `rush-fs-test-mkdir-${Date.now()}-${name}`)
 }
 
 test('mkdirSync: should create a directory', (t) => {

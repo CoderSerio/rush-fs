@@ -3,7 +3,7 @@ import * as path from 'node:path'
 import * as os from 'node:os'
 import { writeFileSync, appendFileSync } from '../index.js'
 
-const tmpDir = path.join(os.tmpdir(), `hyper-fs-bench-writefile-${Date.now()}`)
+const tmpDir = path.join(os.tmpdir(), `rush-fs-bench-writefile-${Date.now()}`)
 fs.mkdirSync(tmpDir, { recursive: true })
 
 const smallData = 'hello world'
@@ -53,25 +53,25 @@ const getPath = () => path.join(tmpDir, `file-${counter++}.txt`)
 // 1. Small string write
 runGroup('writeFile (small 11B, string)', [
   { name: 'Node.js', fn: () => fs.writeFileSync(getPath(), smallData) },
-  { name: 'Hyper-FS', fn: () => writeFileSync(getPath(), smallData) },
+  { name: 'Rush-FS', fn: () => writeFileSync(getPath(), smallData) },
 ])
 
 // 2. Medium string write
 runGroup('writeFile (64KB, string)', [
   { name: 'Node.js', fn: () => fs.writeFileSync(getPath(), mediumData) },
-  { name: 'Hyper-FS', fn: () => writeFileSync(getPath(), mediumData) },
+  { name: 'Rush-FS', fn: () => writeFileSync(getPath(), mediumData) },
 ])
 
 // 3. Large string write
 runGroup('writeFile (4MB, string)', [
   { name: 'Node.js', fn: () => fs.writeFileSync(getPath(), largeData) },
-  { name: 'Hyper-FS', fn: () => writeFileSync(getPath(), largeData) },
+  { name: 'Rush-FS', fn: () => writeFileSync(getPath(), largeData) },
 ])
 
 // 4. Buffer write
 runGroup('writeFile (64KB, Buffer)', [
   { name: 'Node.js', fn: () => fs.writeFileSync(getPath(), bufferData) },
-  { name: 'Hyper-FS', fn: () => writeFileSync(getPath(), bufferData) },
+  { name: 'Rush-FS', fn: () => writeFileSync(getPath(), bufferData) },
 ])
 
 // 5. appendFile
@@ -82,7 +82,7 @@ fs.writeFileSync(appendTarget2, '')
 
 runGroup('appendFile (small string)', [
   { name: 'Node.js', fn: () => fs.appendFileSync(appendTarget1, 'line\n') },
-  { name: 'Hyper-FS', fn: () => appendFileSync(appendTarget2, 'line\n') },
+  { name: 'Rush-FS', fn: () => appendFileSync(appendTarget2, 'line\n') },
 ])
 
 // Cleanup

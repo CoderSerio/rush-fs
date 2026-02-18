@@ -16,14 +16,14 @@ console.log(`Benchmarking glob in: ${cwd}`)
 group('Glob (Simple: src/*.rs)', () => {
   bench('node-glob', () => nodeGlobSync(patternSimple, { cwd }))
   bench('fast-glob', () => fastGlob.sync(patternSimple, { cwd }))
-  bench('hyper-fs', () => hyperGlobSync(patternSimple, { cwd })).baseline()
+  bench('rush-fs', () => hyperGlobSync(patternSimple, { cwd })).baseline()
 })
 
 // 2. Recursive Glob
 group('Glob (Recursive: **/*.rs)', () => {
   bench('node-glob', () => nodeGlobSync(patternRecursive, { cwd }))
   bench('fast-glob', () => fastGlob.sync(patternRecursive, { cwd }))
-  bench('hyper-fs', () => hyperGlobSync(patternRecursive, { cwd })).baseline()
+  bench('rush-fs', () => hyperGlobSync(patternRecursive, { cwd })).baseline()
 })
 
 // 3. Deep Recursive (if node_modules exists)
@@ -34,8 +34,8 @@ group('Glob (Deep: node_modules/**/*.json)', () => {
   if (hasNodeModules) {
     bench('node-glob', () => nodeGlobSync(patternDeep, { cwd }))
     bench('fast-glob', () => fastGlob.sync(patternDeep, { cwd }))
-    bench('hyper-fs', () => hyperGlobSync(patternDeep, { cwd })).baseline()
-    bench('hyper-fs (8 threads)', () => hyperGlobSync(patternDeep, { cwd, concurrency: 8 }))
+    bench('rush-fs', () => hyperGlobSync(patternDeep, { cwd })).baseline()
+    bench('rush-fs (8 threads)', () => hyperGlobSync(patternDeep, { cwd, concurrency: 8 }))
   }
 })
 
