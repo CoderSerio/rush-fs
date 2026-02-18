@@ -22,6 +22,13 @@ walkdir        = "2.5.0"
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59.0", features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_Storage_FileSystem",
+] }
+
 [build-dependencies]
 napi-build = "2"
 

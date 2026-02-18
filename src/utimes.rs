@@ -3,10 +3,10 @@ use napi::Task;
 use napi_derive::napi;
 use std::path::Path;
 
-#[cfg(not(unix))]
+#[cfg(not(any(unix, windows)))]
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-#[cfg(not(unix))]
+#[cfg(not(any(unix, windows)))]
 fn to_system_time(time_secs: f64) -> SystemTime {
   if time_secs >= 0.0 {
     UNIX_EPOCH + Duration::from_secs_f64(time_secs)
@@ -59,7 +59,82 @@ fn utimes_impl(path_str: String, atime: f64, mtime: f64) -> Result<()> {
     }
   }
 
-  #[cfg(not(unix))]
+  #[cfg(windows)]
+  {
+    use std::os::windows::ffi::OsStrExt;
+
+    use windows_sys::Win32::Foundation::{CloseHandle, FILETIME, HANDLE, INVALID_HANDLE_VALUE};
+    use windows_sys::Win32::Storage::FileSystem::{
+      CreateFileW, SetFileTime, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_BACKUP_SEMANTICS,
+      FILE_SHARE_DELETE, FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_WRITE_ATTRIBUTES, OPEN_EXISTING,
+    };
+
+    fn secs_to_filetime(time_secs: f64) -> FILETIME {
+      // FILETIME is 100ns ticks since 1601-01-01 UTC.
+      const EPOCH_DIFF_SECS: f64 = 11_644_473_600.0;
+      let windows_secs = time_secs + EPOCH_DIFF_SECS;
+      let ticks_100ns = (windows_secs * 10_000_000.0).round() as i128;
+      FILETIME {
+        dwLowDateTime: (ticks_100ns & 0xFFFF_FFFF) as u32,
+        dwHighDateTime: ((ticks_100ns >> 32) & 0xFFFF_FFFF) as u32,
+      }
+    }
+
+    let mut flags = FILE_ATTRIBUTE_NORMAL;
+    if path.is_dir() {
+      // Directories require FILE_FLAG_BACKUP_SEMANTICS.
+      flags |= FILE_FLAG_BACKUP_SEMANTICS;
+    }
+
+    let wide: Vec<u16> = path
+      .as_os_str()
+      .encode_wide()
+      .chain(std::iter::once(0))
+      .collect();
+    let handle: HANDLE = unsafe {
+      CreateFileW(
+        wide.as_ptr(),
+        FILE_WRITE_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        std::ptr::null(),
+        OPEN_EXISTING,
+        flags,
+        std::ptr::null_mut(),
+      )
+    };
+    if handle == INVALID_HANDLE_VALUE {
+      let e = std::io::Error::last_os_error();
+      return Err(Error::from_reason(format!(
+        "{}, utimes '{}'",
+        e,
+        path.to_string_lossy()
+      )));
+    }
+
+    let atime_ft = secs_to_filetime(atime);
+    let mtime_ft = secs_to_filetime(mtime);
+    let ok = unsafe {
+      SetFileTime(
+        handle,
+        std::ptr::null(),
+        &atime_ft as *const FILETIME,
+        &mtime_ft as *const FILETIME,
+      )
+    };
+    unsafe {
+      CloseHandle(handle);
+    }
+    if ok == 0 {
+      let e = std::io::Error::last_os_error();
+      return Err(Error::from_reason(format!(
+        "{}, utimes '{}'",
+        e,
+        path.to_string_lossy()
+      )));
+    }
+  }
+
+  #[cfg(not(any(unix, windows)))]
   {
     use std::fs;
     let atime_sys = to_system_time(atime);
@@ -71,7 +146,7 @@ fn utimes_impl(path_str: String, atime: f64, mtime: f64) -> Result<()> {
     file
       .set_modified(mtime_sys)
       .map_err(|e| Error::from_reason(e.to_string()))?;
-    let _ = atime_sys; // Windows doesn't easily support setting atime via std
+    let _ = atime_sys;
   }
 
   Ok(())

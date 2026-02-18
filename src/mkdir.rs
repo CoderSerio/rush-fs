@@ -2,6 +2,7 @@ use napi::bindgen_prelude::*;
 use napi::Task;
 use napi_derive::napi;
 use std::fs;
+use std::io::ErrorKind;
 use std::path::Path;
 
 #[napi(object)]
@@ -25,7 +26,13 @@ fn mkdir_impl(path_str: String, options: Option<MkdirOptions>) -> Result<Option<
   if recursive {
     // Node.js returns the first directory path created, or undefined if it already existed
     if path.exists() {
-      return Ok(None);
+      if path.is_dir() {
+        return Ok(None);
+      }
+      return Err(Error::from_reason(format!(
+        "EEXIST: file already exists, mkdir '{}'",
+        path.to_string_lossy()
+      )));
     }
 
     // Find the first ancestor that doesn't exist
@@ -39,12 +46,14 @@ fn mkdir_impl(path_str: String, options: Option<MkdirOptions>) -> Result<Option<
       }
     }
 
-    fs::create_dir_all(path).map_err(|e| {
-      Error::from_reason(format!(
-        "ENOENT: no such file or directory, mkdir '{}'",
-        e
-      ))
-    })?;
+    if current.exists() && !current.is_dir() {
+      return Err(Error::from_reason(format!(
+        "ENOTDIR: not a directory, mkdir '{}'",
+        path.to_string_lossy()
+      )));
+    }
+
+    fs::create_dir_all(path).map_err(|e| mkdir_error(path, e))?;
 
     #[cfg(unix)]
     {
@@ -57,21 +66,7 @@ fn mkdir_impl(path_str: String, options: Option<MkdirOptions>) -> Result<Option<
     let first_created = ancestors.last().map(|p| p.to_string_lossy().to_string());
     Ok(first_created)
   } else {
-    fs::create_dir(path).map_err(|e| {
-      if e.kind() == std::io::ErrorKind::NotFound {
-        Error::from_reason(format!(
-          "ENOENT: no such file or directory, mkdir '{}'",
-          path.to_string_lossy()
-        ))
-      } else if e.kind() == std::io::ErrorKind::AlreadyExists {
-        Error::from_reason(format!(
-          "EEXIST: file already exists, mkdir '{}'",
-          path.to_string_lossy()
-        ))
-      } else {
-        Error::from_reason(format!("{}", e))
-      }
-    })?;
+    fs::create_dir(path).map_err(|e| mkdir_error(path, e))?;
 
     #[cfg(unix)]
     {
@@ -80,6 +75,31 @@ fn mkdir_impl(path_str: String, options: Option<MkdirOptions>) -> Result<Option<
     }
 
     Ok(None)
+  }
+}
+
+fn mkdir_error(path: &Path, err: std::io::Error) -> Error {
+  let path_display = path.to_string_lossy();
+  if err.to_string().contains("Not a directory") {
+    return Error::from_reason(format!(
+      "ENOTDIR: not a directory, mkdir '{}'",
+      path_display
+    ));
+  }
+  match err.kind() {
+    ErrorKind::NotFound => Error::from_reason(format!(
+      "ENOENT: no such file or directory, mkdir '{}'",
+      path_display
+    )),
+    ErrorKind::AlreadyExists => Error::from_reason(format!(
+      "EEXIST: file already exists, mkdir '{}'",
+      path_display
+    )),
+    ErrorKind::PermissionDenied => Error::from_reason(format!(
+      "EACCES: permission denied, mkdir '{}'",
+      path_display
+    )),
+    _ => Error::from_reason(format!("{}, mkdir '{}'", err, path_display)),
   }
 }
 

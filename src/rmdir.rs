@@ -13,9 +13,7 @@ fn rmdir_impl(path_str: String) -> Result<()> {
         "ENOENT: no such file or directory, rmdir '{}'",
         path.to_string_lossy()
       ))
-    } else if e.to_string().contains("not empty")
-      || e.kind() == std::io::ErrorKind::AlreadyExists
-    {
+    } else if e.to_string().contains("not empty") || e.kind() == std::io::ErrorKind::AlreadyExists {
       Error::from_reason(format!(
         "ENOTEMPTY: directory not empty, rmdir '{}'",
         path.to_string_lossy()

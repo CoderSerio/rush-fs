@@ -29,9 +29,8 @@ fn set_timestamps(src: &Path, dest: &Path) -> std::io::Result<()> {
   let mtime_nsecs = src_meta.mtime_nsec();
 
   unsafe {
-    let c_path = std::ffi::CString::new(dest.to_string_lossy().as_bytes()).map_err(|_| {
-      std::io::Error::new(std::io::ErrorKind::InvalidInput, "invalid path")
-    })?;
+    let c_path = std::ffi::CString::new(dest.to_string_lossy().as_bytes())
+      .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "invalid path"))?;
     let times = [
       libc::timespec {
         tv_sec: atime_secs,
@@ -145,11 +144,9 @@ fn cp_impl(src: &Path, dest: &Path, opts: &CpOptions) -> Result<()> {
       .map_err(|e| Error::from_reason(e.to_string()))?;
 
     if concurrency > 1 {
-      entries
-        .par_iter()
-        .try_for_each(|entry| -> Result<()> {
-          cp_impl(&entry.path(), &dest.join(entry.file_name()), opts)
-        })?;
+      entries.par_iter().try_for_each(|entry| -> Result<()> {
+        cp_impl(&entry.path(), &dest.join(entry.file_name()), opts)
+      })?;
     } else {
       for entry in &entries {
         cp_impl(&entry.path(), &dest.join(entry.file_name()), opts)?;

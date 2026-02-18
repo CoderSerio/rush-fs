@@ -53,6 +53,7 @@
     "format:prettier": "prettier . -w",
     "format:toml": "taplo format",
     "format:rs": "cargo fmt",
+    "fmt:check": "cargo fmt -- --check",
     "lint": "oxlint .",
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
@@ -78,7 +79,6 @@
     "npm-run-all2": "^8.0.4",
     "oxlint": "^1.14.0",
     "prettier": "^3.6.2",
-    "tinybench": "^5.0.1",
     "typescript": "^5.9.2"
   },
   "lint-staged": {

@@ -223,11 +223,15 @@ jobs:
       - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
         if: ${{ contains(matrix.target, 'armv7') }}
       - name: Test bindings
-        uses: addnab/docker-run-action@v3
-        with:
-          image: ${{ steps.docker.outputs.IMAGE }}
-          options: '-v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}'
-          run: corepack enable && pnpm test
+        run: |
+          docker run --rm \
+            -e CI=true \
+            -e GITHUB_ACTIONS=true \
+            -v "${{ github.workspace }}:${{ github.workspace }}" \
+            -w "${{ github.workspace }}" \
+            --platform "${{ steps.docker.outputs.PLATFORM }}" \
+            "${{ steps.docker.outputs.IMAGE }}" \
+            sh -lc "corepack enable && pnpm test"
   publish:
     name: Publish
     runs-on: ubuntu-latest

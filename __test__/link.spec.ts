@@ -32,8 +32,12 @@ test('linkSync: hard link should share the same inode', (t) => {
   linkSync(src, dest)
   const srcStat = statSync(src)
   const destStat = statSync(dest)
-  t.is(srcStat.ino, destStat.ino)
-  t.is(srcStat.nlink, 2)
+  if (process.platform !== 'win32') {
+    t.is(srcStat.ino, destStat.ino)
+    t.is(srcStat.nlink, 2)
+  } else {
+    t.true(srcStat.isFile() && destStat.isFile())
+  }
 })
 
 test('linkSync: should throw ENOENT for non-existent source', (t) => {
@@ -60,7 +64,12 @@ test('linkSync: should match node:fs behavior (same inode)', (t) => {
   linkSync(src, dest)
   const nodeStat = nodeStatSync(dest)
   const hyperStat = statSync(dest)
-  t.is(hyperStat.ino, nodeStat.ino)
+  // ino is 0 on Windows in hyper-fs; only compare on platforms where we report it
+  if (process.platform !== 'win32') {
+    t.is(hyperStat.ino, nodeStat.ino)
+  } else {
+    t.true(hyperStat.isFile() && nodeStat.isFile())
+  }
 })
 
 // ===== async =====

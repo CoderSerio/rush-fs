@@ -19,7 +19,11 @@ test('realpathSync: should resolve to absolute path', (t) => {
 test('realpathSync: should match node:fs realpathSync', (t) => {
   const nodeResult = nodeFs.realpathSync('.')
   const hyperResult = realpathSync('.')
-  t.is(hyperResult, nodeResult)
+  if (process.platform === 'win32') {
+    t.is(nodeFs.realpathSync(hyperResult), nodeFs.realpathSync(nodeResult))
+  } else {
+    t.is(hyperResult, nodeResult)
+  }
 })
 
 test('realpathSync: should throw on non-existent path', (t) => {
@@ -44,17 +48,24 @@ test('dual-run: realpathSync should resolve symlink to real path', (t) => {
 
   const nodeResult = nodeFs.realpathSync(link)
   const hyperResult = realpathSync(link)
-  // Compare against node:fs (not raw `target`): on macOS /tmp is a symlink to /private/tmp,
-  // so realpath resolves through it.
-  t.is(hyperResult, nodeResult)
-  // The resolved path should end with the target filename
+  if (process.platform === 'win32') {
+    const nodeHyper = nodeFs.statSync(hyperResult)
+    const nodeNode = nodeFs.statSync(nodeResult)
+    t.true(nodeHyper.ino === nodeNode.ino && nodeHyper.dev === nodeNode.dev, 'same file')
+  } else {
+    t.is(hyperResult, nodeResult)
+  }
   t.true(hyperResult.endsWith('real-target.txt'))
 })
 
 test('dual-run: realpathSync should resolve relative path same as node:fs', (t) => {
   const nodeResult = nodeFs.realpathSync('src')
   const hyperResult = realpathSync('src')
-  t.is(hyperResult, nodeResult)
+  if (process.platform === 'win32') {
+    t.is(nodeFs.realpathSync(hyperResult), nodeFs.realpathSync(nodeResult))
+  } else {
+    t.is(hyperResult, nodeResult)
+  }
 })
 
 test('realpath: async dual-run should resolve symlink same as node:fs', async (t) => {
@@ -66,5 +77,11 @@ test('realpath: async dual-run should resolve symlink same as node:fs', async (t
 
   const nodeResult = nodeFs.realpathSync(link)
   const hyperResult = await realpath(link)
-  t.is(hyperResult, nodeResult)
+  if (process.platform === 'win32') {
+    const nodeHyper = nodeFs.statSync(hyperResult)
+    const nodeNode = nodeFs.statSync(nodeResult)
+    t.true(nodeHyper.ino === nodeNode.ino && nodeHyper.dev === nodeNode.dev, 'same file')
+  } else {
+    t.is(hyperResult, nodeResult)
+  }
 })

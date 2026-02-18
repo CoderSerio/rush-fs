@@ -3,34 +3,35 @@ use napi::bindgen_prelude::*;
 use napi::Task;
 use napi_derive::napi;
 use std::fs;
+use std::io::ErrorKind;
 use std::path::Path;
 
 #[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
 
+fn secs_nanos_to_ms(secs: i64, nsecs: i64) -> f64 {
+  (secs as f64) * 1000.0 + (nsecs as f64) / 1_000_000.0
+}
+
+fn system_time_to_ms(t: std::time::SystemTime) -> f64 {
+  use std::time::UNIX_EPOCH;
+  match t.duration_since(UNIX_EPOCH) {
+    Ok(d) => d.as_secs_f64() * 1000.0,
+    Err(e) => -(e.duration().as_secs_f64() * 1000.0),
+  }
+}
+
 fn metadata_to_stats(meta: &fs::Metadata) -> Stats {
   #[cfg(unix)]
   {
-    use std::time::UNIX_EPOCH;
-    let atime_ms = meta
-      .accessed()
-      .ok()
-      .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-      .map(|d| d.as_secs_f64() * 1000.0)
-      .unwrap_or(0.0);
-    let mtime_ms = meta
-      .modified()
-      .ok()
-      .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-      .map(|d| d.as_secs_f64() * 1000.0)
-      .unwrap_or(0.0);
-    let ctime_ms = (meta.ctime() as f64) * 1000.0 + (meta.ctime_nsec() as f64) / 1_000_000.0;
+    let atime_ms = secs_nanos_to_ms(meta.atime(), meta.atime_nsec());
+    let mtime_ms = secs_nanos_to_ms(meta.mtime(), meta.mtime_nsec());
+    let ctime_ms = secs_nanos_to_ms(meta.ctime(), meta.ctime_nsec());
     let birthtime_ms = meta
       .created()
       .ok()
-      .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-      .map(|d| d.as_secs_f64() * 1000.0)
-      .unwrap_or(0.0);
+      .map(system_time_to_ms)
+      .unwrap_or(ctime_ms);
 
     Stats {
       dev: meta.dev() as f64,
@@ -52,23 +53,20 @@ fn metadata_to_stats(meta: &fs::Metadata) -> Stats {
 
   #[cfg(not(unix))]
   {
-    use std::time::UNIX_EPOCH;
     let to_ms = |t: std::io::Result<std::time::SystemTime>| -> f64 {
-      t.ok()
-        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-        .map(|d| d.as_secs_f64() * 1000.0)
-        .unwrap_or(0.0)
+      t.ok().map(system_time_to_ms).unwrap_or(0.0)
     };
     let atime_ms = to_ms(meta.accessed());
     let mtime_ms = to_ms(meta.modified());
     let birthtime_ms = to_ms(meta.created());
 
+    // Match node:fs on Windows: include basic permission bits.
     let mode = if meta.is_dir() {
-      0o040000u32
+      0o040000u32 | 0o777
     } else if meta.is_symlink() {
-      0o120000u32
+      0o120000u32 | 0o777
     } else {
-      0o100000u32
+      0o100000u32 | 0o666
     };
 
     Stats {
@@ -92,25 +90,66 @@ fn metadata_to_stats(meta: &fs::Metadata) -> Stats {
 
 fn stat_impl(path_str: String, follow_symlinks: bool) -> Result<Stats> {
   let path = Path::new(&path_str);
-  let meta = if follow_symlinks {
+  let meta_result = if follow_symlinks {
     fs::metadata(path)
   } else {
     fs::symlink_metadata(path)
   };
-  let meta = meta.map_err(|e| {
-    if e.kind() == std::io::ErrorKind::PermissionDenied {
-      Error::from_reason(format!(
-        "EACCES: permission denied, stat '{}'",
-        path.to_string_lossy()
-      ))
-    } else {
-      Error::from_reason(format!(
-        "ENOENT: no such file or directory, stat '{}'",
-        path.to_string_lossy()
-      ))
+
+  let meta = match meta_result {
+    Ok(meta) => meta,
+    Err(err) => {
+      #[cfg(windows)]
+      {
+        if follow_symlinks && err.kind() == ErrorKind::PermissionDenied {
+          if let Some(target_meta) = follow_windows_symlink_target(path) {
+            target_meta
+          } else {
+            return Err(stat_error(path, err));
+          }
+        } else {
+          return Err(stat_error(path, err));
+        }
+      }
+      #[cfg(not(windows))]
+      {
+        return Err(stat_error(path, err));
+      }
     }
-  })?;
+  };
+
   Ok(metadata_to_stats(&meta))
+}
+
+fn stat_error(path: &Path, err: std::io::Error) -> Error {
+  if err.kind() == ErrorKind::PermissionDenied {
+    Error::from_reason(format!(
+      "EACCES: permission denied, stat '{}'",
+      path.to_string_lossy()
+    ))
+  } else {
+    Error::from_reason(format!(
+      "ENOENT: no such file or directory, stat '{}'",
+      path.to_string_lossy()
+    ))
+  }
+}
+
+#[cfg(windows)]
+fn follow_windows_symlink_target(path: &Path) -> Option<fs::Metadata> {
+  let link_meta = fs::symlink_metadata(path).ok()?;
+  if !link_meta.file_type().is_symlink() {
+    return None;
+  }
+
+  let target = fs::read_link(path).ok()?;
+  let resolved = if target.is_absolute() {
+    target
+  } else {
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    parent.join(target)
+  };
+  fs::metadata(&resolved).ok()
 }
 
 #[napi(js_name = "statSync")]

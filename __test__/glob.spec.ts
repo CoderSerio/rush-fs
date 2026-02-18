@@ -102,7 +102,7 @@ test('async: should return empty array for no matches', async (t) => {
 test('async: recursive match', async (t) => {
   const files = await glob('**/*.rs', { cwd: CWD })
   t.true(files.length > 0)
-  t.true(files.some((f) => f.includes('src/lib.rs')))
+  t.true(files.some((f) => f.replace(/\\/g, '/').includes('src/lib.rs')))
 })
 
 // ===== 目录匹配行为（对齐 Node.js fs.globSync）=====
@@ -161,9 +161,11 @@ test('dual-run: globSync "src/*" should match node:fs.globSync behavior for dire
   try {
     // @ts-ignore - globSync 在旧版 Node 可能不存在
     const nodeGlob = nodeFs.globSync as ((p: string, o: object) => string[]) | undefined
-    if (typeof nodeGlob === 'function') {
-      nodeResults.push(...nodeGlob('src/*', { cwd: base }))
+    if (typeof nodeGlob !== 'function') {
+      t.pass('node:fs.globSync not available, skipping dual-run comparison')
+      return
     }
+    nodeResults.push(...nodeGlob('src/*', { cwd: base }))
   } catch {
     // 旧版 Node.js 不支持 fs.globSync，跳过对比
     t.pass('node:fs.globSync not available, skipping dual-run comparison')

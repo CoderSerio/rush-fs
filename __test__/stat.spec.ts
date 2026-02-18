@@ -113,16 +113,24 @@ test('statSync: atime Date should be correct for pre-epoch (negative ms) timesta
   const file = join(dir, 'pre-epoch.txt')
   nodeFs.writeFileSync(file, 'x')
   // -500 ms = 1969-12-31T23:59:59.500Z
-  const preEpochSecs = -0.5
-  nodeFs.utimesSync(file, preEpochSecs, preEpochSecs)
+  // NOTE: Passing a negative number to utimesSync is not reliably supported across
+  // platforms/Node versions. Use Date objects to ensure the pre-epoch timestamp
+  // is actually applied.
+  const preEpoch = new Date(-500)
+  nodeFs.utimesSync(file, preEpoch, preEpoch)
 
   const hyperStat = statSync(file)
   const nodeStat = nodeFs.statSync(file)
 
   // 验证 ms 值符号正确（负值）
   t.true(hyperStat.mtimeMs < 0, 'mtimeMs should be negative for pre-epoch timestamps')
-  // 验证转换后的 Date 和 node:fs 一致
-  t.is(hyperStat.mtime.getTime(), nodeStat.mtime.getTime())
+  // 验证 hyper 的 Date 为 -500
+  t.is(hyperStat.mtime.getTime(), -500)
+  // 与 node:fs 一致（仅当 node 也返回负值时才比较；Windows 上 node 有时返回 4294967295500 等异常值）
+  const nodeTime = nodeStat.mtime.getTime()
+  if (nodeTime < 0) {
+    t.is(hyperStat.mtime.getTime(), nodeTime)
+  }
 })
 
 test('statSync: mtime Date should have correct sub-second precision', (t) => {

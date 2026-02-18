@@ -129,7 +129,11 @@ pub fn glob_sync(
         } else {
           0
         };
-        lock.push(Dirent { name, parent_path, file_type });
+        lock.push(Dirent {
+          name,
+          parent_path,
+          file_type,
+        });
       } else {
         let mut lock = result_strings.lock().unwrap();
         lock.push(relative_path_str);

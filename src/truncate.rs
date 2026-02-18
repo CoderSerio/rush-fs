@@ -19,7 +19,9 @@ fn truncate_impl(path_str: String, len: Option<i64>) -> Result<()> {
     }
   })?;
 
-  file.set_len(len).map_err(|e| Error::from_reason(e.to_string()))?;
+  file
+    .set_len(len)
+    .map_err(|e| Error::from_reason(e.to_string()))?;
   Ok(())
 }
 

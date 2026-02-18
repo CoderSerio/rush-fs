@@ -4,6 +4,18 @@ use napi_derive::napi;
 use std::fs;
 use std::path::Path;
 
+#[cfg(windows)]
+fn strip_verbatim_prefix(s: String) -> String {
+  if let Some(rest) = s.strip_prefix(r"\\?\UNC\") {
+    // \\?\UNC\server\share\path -> \\server\share\path
+    return format!(r"\\{}", rest);
+  }
+  if let Some(rest) = s.strip_prefix(r"\\?\") {
+    return rest.to_string();
+  }
+  s
+}
+
 fn realpath_impl(path_str: String) -> Result<String> {
   let path = Path::new(&path_str);
   let resolved = fs::canonicalize(path).map_err(|e| {
@@ -16,6 +28,15 @@ fn realpath_impl(path_str: String) -> Result<String> {
       Error::from_reason(e.to_string())
     }
   })?;
+
+  #[cfg(windows)]
+  {
+    // Return long path (strip \\?\) to match node:fs; do not use GetShortPathNameW (8.3) so tests match.
+    let s = resolved.to_string_lossy().to_string();
+    return Ok(strip_verbatim_prefix(s));
+  }
+
+  #[cfg(not(windows))]
   Ok(resolved.to_string_lossy().to_string())
 }
 

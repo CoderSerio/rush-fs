@@ -22,8 +22,8 @@ pub mod symlink;
 pub mod truncate;
 pub mod types;
 pub mod unlink;
-pub mod utimes;
 pub mod utils;
+pub mod utimes;
 pub mod write_file;
 
 pub use access::*;
