@@ -124,8 +124,13 @@ test('statSync: atime Date should be correct for pre-epoch (negative ms) timesta
 
   // 验证 ms 值符号正确（负值）
   t.true(hyperStat.mtimeMs < 0, 'mtimeMs should be negative for pre-epoch timestamps')
-  // 验证转换后的 Date 和 node:fs 一致
-  t.is(hyperStat.mtime.getTime(), nodeStat.mtime.getTime())
+  // 验证 hyper 的 Date 为 -500
+  t.is(hyperStat.mtime.getTime(), -500)
+  // 与 node:fs 一致（Windows 上 node 有时会返回异常大值，仅当 node 正常时比较）
+  const nodeTime = nodeStat.mtime.getTime()
+  if (nodeTime > 0 && nodeTime < 1e15) {
+    t.is(hyperStat.mtime.getTime(), nodeTime)
+  }
 })
 
 test('statSync: mtime Date should have correct sub-second precision', (t) => {

@@ -61,11 +61,12 @@ fn utimes_impl(path_str: String, atime: f64, mtime: f64) -> Result<()> {
 
   #[cfg(windows)]
   {
-    use std::fs;
-    use std::os::windows::io::AsRawHandle;
+    use std::os::windows::ffi::OsStrExt;
 
-    use windows_sys::Win32::Foundation::FILETIME;
-    use windows_sys::Win32::Storage::FileSystem::SetFileTime;
+    use windows_sys::Win32::Foundation::{CloseHandle, FILETIME, HANDLE, INVALID_HANDLE_VALUE};
+    use windows_sys::Win32::Storage::FileSystem::{
+      CreateFileW, SetFileTime, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, OPEN_EXISTING,
+    };
 
     fn secs_to_filetime(time_secs: f64) -> FILETIME {
       // Convert Unix epoch seconds to Windows FILETIME (100ns ticks since 1601-01-01).
@@ -83,24 +84,46 @@ fn utimes_impl(path_str: String, atime: f64, mtime: f64) -> Result<()> {
     let atime_ft = secs_to_filetime(atime);
     let mtime_ft = secs_to_filetime(mtime);
 
-    // FILE_WRITE_ATTRIBUTES is enough for SetFileTime.
-    let file = fs::OpenOptions::new()
-      .write(true)
-      .open(path)
-      .map_err(|e| Error::from_reason(e.to_string()))?;
-
+    // SetFileTime requires a handle opened with FILE_WRITE_ATTRIBUTES (std OpenOptions::write doesn't).
+    let wide: Vec<u16> = path
+      .as_os_str()
+      .encode_wide()
+      .chain(std::iter::once(0))
+      .collect();
+    // SetFileTime requires handle opened with FILE_WRITE_ATTRIBUTES (0x80).
+    let h = unsafe {
+      CreateFileW(
+        wide.as_ptr(),
+        0x80, // FILE_WRITE_ATTRIBUTES
+        FILE_SHARE_READ.0,
+        std::ptr::null(),
+        OPEN_EXISTING.0,
+        FILE_ATTRIBUTE_NORMAL,
+        std::ptr::null_mut::<HANDLE>(),
+      )
+    };
+    if h == INVALID_HANDLE_VALUE {
+      let e = std::io::Error::last_os_error();
+      return Err(Error::from_reason(format!(
+        "{}, utimes '{}'",
+        e,
+        path.to_string_lossy()
+      )));
+    }
     let ok = unsafe {
       SetFileTime(
-        file.as_raw_handle() as isize,
+        h,
         std::ptr::null(),
         &atime_ft as *const FILETIME,
         &mtime_ft as *const FILETIME,
       )
     };
+    unsafe { CloseHandle(h) };
     if ok == 0 {
+      let e = std::io::Error::last_os_error();
       return Err(Error::from_reason(format!(
         "{}, utimes '{}'",
-        std::io::Error::last_os_error(),
+        e,
         path.to_string_lossy()
       )));
     }
