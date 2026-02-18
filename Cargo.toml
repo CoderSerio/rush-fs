@@ -2,8 +2,8 @@
 [package]
 authors = []
 edition = "2021"
-name    = "hyper_fs"
-version = "0.1.0"
+name    = "rush_fs"
+version = "0.0.2"
 
 [lib]
 crate-type = ["cdylib"]

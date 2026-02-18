@@ -1,6 +1,6 @@
 {
   "name": "rush-fs",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "High-performance drop-in replacement for Node.js fs module, powered by Rust",
   "main": "index.js",
   "repository": {
@@ -115,9 +115,9 @@
   },
   "packageManager": "pnpm@9.15.4",
   "optionalDependencies": {
-    "rush-fs-win32-x64-msvc": "0.0.1",
-    "rush-fs-darwin-x64": "0.0.1",
-    "rush-fs-linux-x64-gnu": "0.0.1",
-    "rush-fs-darwin-arm64": "0.0.1"
+    "rush-fs-win32-x64-msvc": "0.0.2",
+    "rush-fs-darwin-x64": "0.0.2",
+    "rush-fs-linux-x64-gnu": "0.0.2",
+    "rush-fs-darwin-arm64": "0.0.2"
   }
 }
