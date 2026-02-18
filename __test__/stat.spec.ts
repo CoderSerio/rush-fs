@@ -107,6 +107,42 @@ test('lstatSync: dual-run — symlink should report isSymbolicLink()', (t) => {
   t.false(hyperLstat.isFile())
 })
 
+test('statSync: atime Date should be correct for pre-epoch (negative ms) timestamp', (t) => {
+  // 使用 node:fs utimesSync 设置一个 Unix 纪元前的时间戳（负毫秒值）
+  const dir = tmpDir()
+  const file = join(dir, 'pre-epoch.txt')
+  nodeFs.writeFileSync(file, 'x')
+  // -500 ms = 1969-12-31T23:59:59.500Z
+  const preEpochSecs = -0.5
+  nodeFs.utimesSync(file, preEpochSecs, preEpochSecs)
+
+  const hyperStat = statSync(file)
+  const nodeStat = nodeFs.statSync(file)
+
+  // 验证 ms 值符号正确（负值）
+  t.true(hyperStat.mtimeMs < 0, 'mtimeMs should be negative for pre-epoch timestamps')
+  // 验证转换后的 Date 和 node:fs 一致
+  t.is(hyperStat.mtime.getTime(), nodeStat.mtime.getTime())
+})
+
+test('statSync: mtime Date should have correct sub-second precision', (t) => {
+  const dir = tmpDir()
+  const file = join(dir, 'subsec.txt')
+  nodeFs.writeFileSync(file, 'x')
+  // 设置带小数秒的时间戳（500ms 精度）
+  const ts = 1_700_000_000.5 // 带 0.5 秒小数部分
+  nodeFs.utimesSync(file, ts, ts)
+
+  const hyperStat = statSync(file)
+  const nodeStat = nodeFs.statSync(file)
+
+  // Date 毫秒值应和 node:fs 一致（精度 1ms 内）
+  t.true(
+    Math.abs(hyperStat.mtime.getTime() - nodeStat.mtime.getTime()) < 2,
+    `mtime mismatch: hyper=${hyperStat.mtime.getTime()} node=${nodeStat.mtime.getTime()}`,
+  )
+})
+
 test('statSync: dual-run — stat follows symlink (shows target not link)', (t) => {
   const dir = tmpDir()
   const target = join(dir, 'target.txt')

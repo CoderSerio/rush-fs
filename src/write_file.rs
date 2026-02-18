@@ -150,7 +150,8 @@ pub fn write_file_sync(
 
 pub struct WriteFileTask {
   pub path: String,
-  pub data: Vec<u8>,
+  pub string_data: Option<String>,
+  pub bytes_data: Option<Vec<u8>>,
   pub options: Option<WriteFileOptions>,
 }
 
@@ -159,12 +160,12 @@ impl Task for WriteFileTask {
   type JsValue = ();
 
   fn compute(&mut self) -> Result<Self::Output> {
-    let data_clone = self.data.clone();
-    write_file_impl(
-      self.path.clone(),
-      Either::B(Buffer::from(data_clone)),
-      self.options.clone(),
-    )
+    let data = if let Some(s) = self.string_data.take() {
+      Either::A(s)
+    } else {
+      Either::B(Buffer::from(self.bytes_data.take().unwrap_or_default()))
+    };
+    write_file_impl(self.path.clone(), data, self.options.clone())
   }
 
   fn resolve(&mut self, _env: Env, _output: Self::Output) -> Result<Self::JsValue> {
@@ -178,13 +179,14 @@ pub fn write_file(
   data: Either<String, Buffer>,
   options: Option<WriteFileOptions>,
 ) -> AsyncTask<WriteFileTask> {
-  let bytes = match &data {
-    Either::A(s) => s.as_bytes().to_vec(),
-    Either::B(b) => b.to_vec(),
+  let (string_data, bytes_data) = match data {
+    Either::A(s) => (Some(s), None),
+    Either::B(b) => (None, Some(b.to_vec())),
   };
   AsyncTask::new(WriteFileTask {
     path,
-    data: bytes,
+    string_data,
+    bytes_data,
     options,
   })
 }
@@ -216,7 +218,8 @@ pub fn append_file_sync(
 
 pub struct AppendFileTask {
   pub path: String,
-  pub data: Vec<u8>,
+  pub string_data: Option<String>,
+  pub bytes_data: Option<Vec<u8>>,
   pub options: Option<WriteFileOptions>,
 }
 
@@ -225,12 +228,12 @@ impl Task for AppendFileTask {
   type JsValue = ();
 
   fn compute(&mut self) -> Result<Self::Output> {
-    let data_clone = self.data.clone();
-    append_file_impl(
-      self.path.clone(),
-      Either::B(Buffer::from(data_clone)),
-      self.options.clone(),
-    )
+    let data = if let Some(s) = self.string_data.take() {
+      Either::A(s)
+    } else {
+      Either::B(Buffer::from(self.bytes_data.take().unwrap_or_default()))
+    };
+    append_file_impl(self.path.clone(), data, self.options.clone())
   }
 
   fn resolve(&mut self, _env: Env, _output: Self::Output) -> Result<Self::JsValue> {
@@ -244,13 +247,14 @@ pub fn append_file(
   data: Either<String, Buffer>,
   options: Option<WriteFileOptions>,
 ) -> AsyncTask<AppendFileTask> {
-  let bytes = match &data {
-    Either::A(s) => s.as_bytes().to_vec(),
-    Either::B(b) => b.to_vec(),
+  let (string_data, bytes_data) = match data {
+    Either::A(s) => (Some(s), None),
+    Either::B(b) => (None, Some(b.to_vec())),
   };
   AsyncTask::new(AppendFileTask {
     path,
-    data: bytes,
+    string_data,
+    bytes_data,
     options,
   })
 }

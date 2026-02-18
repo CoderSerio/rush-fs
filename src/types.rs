@@ -163,8 +163,10 @@ impl Stats {
 }
 
 fn ms_to_datetime(ms: f64) -> DateTime<Local> {
-  let secs = (ms / 1000.0) as i64;
-  let nsecs = ((ms % 1000.0) * 1_000_000.0) as u32;
+  // 先换算到纳秒整数，再用 Euclidean 除法拆分，保证 nsecs 始终非负
+  let total_ns = (ms * 1_000_000.0).round() as i64;
+  let secs = total_ns.div_euclid(1_000_000_000);
+  let nsecs = total_ns.rem_euclid(1_000_000_000) as u32;
   Local
     .timestamp_opt(secs, nsecs)
     .single()

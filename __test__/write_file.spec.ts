@@ -56,6 +56,52 @@ test('appendFile: async should append', async (t) => {
   t.is(content, 'ab')
 })
 
+// ===== encoding option tests (async) =====
+
+test('writeFile: async hex encoding should write decoded binary bytes', async (t) => {
+  const file = tmpFile('async-hex.bin')
+  // "deadbeef" 以 hex encoding 写入，应得到 4 个字节 0xde 0xad 0xbe 0xef
+  await writeFile(file, 'deadbeef', { encoding: 'hex' })
+  const buf = nodeFs.readFileSync(file)
+  t.deepEqual([...buf], [0xde, 0xad, 0xbe, 0xef])
+})
+
+test('writeFile: async base64 encoding should write decoded bytes', async (t) => {
+  const file = tmpFile('async-b64.bin')
+  const original = Buffer.from([0x01, 0x02, 0x03, 0xff])
+  const b64 = original.toString('base64')
+  await writeFile(file, b64, { encoding: 'base64' })
+  const buf = nodeFs.readFileSync(file)
+  t.deepEqual([...buf], [...original])
+})
+
+test('writeFile: async encoding result matches node:fs writeFile', async (t) => {
+  const nodeFile = tmpFile('node-hex.bin')
+  const hyperFile = tmpFile('hyper-hex.bin')
+  nodeFs.writeFileSync(nodeFile, 'cafebabe', { encoding: 'hex' })
+  await writeFile(hyperFile, 'cafebabe', { encoding: 'hex' })
+  t.deepEqual([...nodeFs.readFileSync(hyperFile)], [...nodeFs.readFileSync(nodeFile)])
+})
+
+test('appendFile: async hex encoding should append decoded binary bytes', async (t) => {
+  const file = tmpFile('async-append-hex.bin')
+  nodeFs.writeFileSync(file, Buffer.from([0x01]))
+  await appendFile(file, 'ff00', { encoding: 'hex' })
+  const buf = nodeFs.readFileSync(file)
+  t.deepEqual([...buf], [0x01, 0xff, 0x00])
+})
+
+test('appendFile: async encoding result matches node:fs appendFile', async (t) => {
+  const nodeFile = tmpFile('node-append-b64.bin')
+  const hyperFile = tmpFile('hyper-append-b64.bin')
+  const b64 = Buffer.from('hello').toString('base64')
+  nodeFs.writeFileSync(nodeFile, '')
+  nodeFs.writeFileSync(hyperFile, '')
+  nodeFs.appendFileSync(nodeFile, b64, { encoding: 'base64' })
+  await appendFile(hyperFile, b64, { encoding: 'base64' })
+  t.deepEqual([...nodeFs.readFileSync(hyperFile)], [...nodeFs.readFileSync(nodeFile)])
+})
+
 // ===== dual-run comparison =====
 
 test('dual-run: writeFileSync should produce same file content as node:fs', (t) => {
