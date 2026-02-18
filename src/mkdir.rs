@@ -80,6 +80,12 @@ fn mkdir_impl(path_str: String, options: Option<MkdirOptions>) -> Result<Option<
 
 fn mkdir_error(path: &Path, err: std::io::Error) -> Error {
   let path_display = path.to_string_lossy();
+  if err.to_string().contains("Not a directory") {
+    return Error::from_reason(format!(
+      "ENOTDIR: not a directory, mkdir '{}'",
+      path_display
+    ));
+  }
   match err.kind() {
     ErrorKind::NotFound => Error::from_reason(format!(
       "ENOENT: no such file or directory, mkdir '{}'",
@@ -91,10 +97,6 @@ fn mkdir_error(path: &Path, err: std::io::Error) -> Error {
     )),
     ErrorKind::PermissionDenied => Error::from_reason(format!(
       "EACCES: permission denied, mkdir '{}'",
-      path_display
-    )),
-    ErrorKind::NotADirectory => Error::from_reason(format!(
-      "ENOTDIR: not a directory, mkdir '{}'",
       path_display
     )),
     _ => Error::from_reason(format!("{}, mkdir '{}'", err, path_display)),
