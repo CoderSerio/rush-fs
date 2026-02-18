@@ -25,10 +25,7 @@ fn link_impl(existing_path: String, new_path: String) -> Result<()> {
         existing_path, new_path
       ))
     } else {
-      Error::from_reason(format!(
-        "{}, link '{}' -> '{}'",
-        e, existing_path, new_path
-      ))
+      Error::from_reason(format!("{}, link '{}' -> '{}'", e, existing_path, new_path))
     }
   })?;
   Ok(())

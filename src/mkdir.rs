@@ -40,10 +40,7 @@ fn mkdir_impl(path_str: String, options: Option<MkdirOptions>) -> Result<Option<
     }
 
     fs::create_dir_all(path).map_err(|e| {
-      Error::from_reason(format!(
-        "ENOENT: no such file or directory, mkdir '{}'",
-        e
-      ))
+      Error::from_reason(format!("ENOENT: no such file or directory, mkdir '{}'", e))
     })?;
 
     #[cfg(unix)]

@@ -1,7 +1,7 @@
 use napi::bindgen_prelude::*;
 use napi::Task;
 use napi_derive::napi;
-use std::fs::{self, OpenOptions};
+use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 
@@ -74,7 +74,10 @@ fn hex_val(b: u8) -> Result<u8> {
     b'0'..=b'9' => Ok(b - b'0'),
     b'a'..=b'f' => Ok(b - b'a' + 10),
     b'A'..=b'F' => Ok(b - b'A' + 10),
-    _ => Err(Error::from_reason(format!("Invalid hex character: {}", b as char))),
+    _ => Err(Error::from_reason(format!(
+      "Invalid hex character: {}",
+      b as char
+    ))),
   }
 }
 
@@ -86,7 +89,11 @@ pub struct WriteFileOptions {
   pub flag: Option<String>,
 }
 
-fn write_file_impl(path_str: String, data: Either<String, Buffer>, options: Option<WriteFileOptions>) -> Result<()> {
+fn write_file_impl(
+  path_str: String,
+  data: Either<String, Buffer>,
+  options: Option<WriteFileOptions>,
+) -> Result<()> {
   let path = Path::new(&path_str);
   let opts = options.unwrap_or(WriteFileOptions {
     encoding: None,
@@ -103,11 +110,21 @@ fn write_file_impl(path_str: String, data: Either<String, Buffer>, options: Opti
 
   let mut open_opts = OpenOptions::new();
   match flag {
-    "w" => { open_opts.write(true).create(true).truncate(true); }
-    "wx" | "xw" => { open_opts.write(true).create_new(true); }
-    "a" => { open_opts.append(true).create(true); }
-    "ax" | "xa" => { open_opts.append(true).create_new(true); }
-    _ => { open_opts.write(true).create(true).truncate(true); }
+    "w" => {
+      open_opts.write(true).create(true).truncate(true);
+    }
+    "wx" | "xw" => {
+      open_opts.write(true).create_new(true);
+    }
+    "a" => {
+      open_opts.append(true).create(true);
+    }
+    "ax" | "xa" => {
+      open_opts.append(true).create_new(true);
+    }
+    _ => {
+      open_opts.write(true).create(true).truncate(true);
+    }
   }
 
   let mut file = open_opts.open(path).map_err(|e| {
@@ -126,10 +143,13 @@ fn write_file_impl(path_str: String, data: Either<String, Buffer>, options: Opti
     }
   })?;
 
-  file.write_all(&bytes).map_err(|e| Error::from_reason(e.to_string()))?;
+  file
+    .write_all(&bytes)
+    .map_err(|e| Error::from_reason(e.to_string()))?;
 
   #[cfg(unix)]
   if let Some(mode) = opts.mode {
+    use std::fs;
     use std::os::unix::fs::PermissionsExt;
     let _ = fs::set_permissions(path, fs::Permissions::from_mode(mode));
   }
@@ -193,7 +213,11 @@ pub fn write_file(
 
 // appendFile is writeFile with flag='a'
 
-fn append_file_impl(path_str: String, data: Either<String, Buffer>, options: Option<WriteFileOptions>) -> Result<()> {
+fn append_file_impl(
+  path_str: String,
+  data: Either<String, Buffer>,
+  options: Option<WriteFileOptions>,
+) -> Result<()> {
   let opts = options.unwrap_or(WriteFileOptions {
     encoding: None,
     mode: None,

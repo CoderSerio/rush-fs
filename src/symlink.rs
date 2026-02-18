@@ -76,7 +76,11 @@ impl Task for SymlinkTask {
   type JsValue = ();
 
   fn compute(&mut self) -> Result<Self::Output> {
-    symlink_impl(self.target.clone(), self.path.clone(), self.symlink_type.clone())
+    symlink_impl(
+      self.target.clone(),
+      self.path.clone(),
+      self.symlink_type.clone(),
+    )
   }
 
   fn resolve(&mut self, _env: Env, _output: Self::Output) -> Result<Self::JsValue> {
@@ -85,6 +89,14 @@ impl Task for SymlinkTask {
 }
 
 #[napi(js_name = "symlink")]
-pub fn symlink(target: String, path: String, symlink_type: Option<String>) -> AsyncTask<SymlinkTask> {
-  AsyncTask::new(SymlinkTask { target, path, symlink_type })
+pub fn symlink(
+  target: String,
+  path: String,
+  symlink_type: Option<String>,
+) -> AsyncTask<SymlinkTask> {
+  AsyncTask::new(SymlinkTask {
+    target,
+    path,
+    symlink_type,
+  })
 }
