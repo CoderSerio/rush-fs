@@ -418,6 +418,17 @@ Rush-FS 在文件系统遍历类操作中使用多线程并行：
 
 参阅 [CONTRIBUTING.md](./CONTRIBUTING.md) — 完整的开发指南，涵盖环境搭建、参考 Node.js 源码、编写 Rust 实现、测试与性能基准。
 
+## 发布（维护者专用）
+
+`rush-fs` 会为每个平台发布一个预编译二进制（参见 `package.json` 中的 `optionalDependencies`）。要发布新版本，请依次执行：
+
+1. 确保已执行 `npm login`。
+2. 使用 `pnpm version <patch|minor|major>` 提升版本号（内部会运行 `pnpm preversion`，构建 release 产物）。
+3. 运行 `pnpm prepublishOnly`（即 `napi prepublish -t npm`）逐个发布 `rush-fs-<platform>` 可选依赖，例如 `rush-fs-darwin-arm64`、`rush-fs-win32-x64-msvc` 等。
+4. 最后执行 `pnpm publish --access public` 发布主包。`prepublishOnly` 会自动触发，但提前单独跑第 3 步可以先确认各平台包已成功发布。
+
+一旦某个平台包发布失败，修复问题后需重新执行 `pnpm prepublishOnly`，确保主包不会依赖缺失的可选依赖。
+
 ## 许可证
 
 MIT

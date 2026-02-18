@@ -74,28 +74,28 @@ graph TD
 
 ## How does it works
 
-For the original Node.js, it works serially and cost lots of memory to parse os object and string into JS style: 
+For the original Node.js, it works serially and cost lots of memory to parse os object and string into JS style:
 
 ```mermaid
 graph TD
     A["JS: readdir"] -->|Call| B("Node.js C++ Binding")
     B -->|Submit Task| C{"Libuv Thread Pool"}
-    
+
     subgraph "Native Layer (Serial)"
     C -->|"Syscall: getdents"| D[OS Kernel]
     D -->|"Return File List"| C
     C -->|"Process Paths"| C
     end
-    
+
     C -->|"Results Ready"| E("V8 Main Thread")
-    
+
     subgraph "V8 Interaction (Heavy)"
     E -->|"Create JS String 1"| F[V8 Heap]
     E -->|"String 2"| F
     E -->|"String N..."| F
     F -->|"GC Pressure Rising"| F
     end
-    
+
     E -->|"Return Array"| G["JS Callback/Promise"]
 ```
 
@@ -105,24 +105,22 @@ But, it's saved with Rust now:
 graph TD
     A["JS: readdir"] -->|"N-API Call"| B("Rust Wrapper")
     B -->|"Spawn Thread/Task"| C{"Rust Thread Pool"}
-    
+
     subgraph "Rust 'Black Box'"
     C -->|"Rayon: Parallel work"| D[OS Kernel]
     D -->|"Syscall: getdents"| C
     C -->|"Store as Rust Vec<String>"| H[Rust Heap]
     H -->|"No V8 Interaction yet"| H
     end
-    
+
     C -->|"All Done"| I("Convert to JS")
-    
+
     subgraph "N-API Bridge"
     I -->|"Batch Create JS Array"| J[V8 Heap]
     end
-    
+
     J -->|Return| K["JS Result"]
 ```
-
-
 
 ## Status & Roadmap
 
@@ -518,6 +516,17 @@ Optimal concurrency for `cp` is **4 threads** on Apple Silicon — beyond that, 
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the complete development guide — from environment setup, referencing Node.js source, writing Rust implementations, to testing and benchmarking.
+
+## Publishing (Maintainers Only)
+
+`rush-fs` ships prebuilt native binaries per platform (see `optionalDependencies` in `package.json`). When cutting a release you must publish both the platform-specific packages and the main package:
+
+1. Ensure you are logged in to npm (`npm login`).
+2. Bump the version via `pnpm version <patch|minor|major>` (this runs `pnpm preversion` to build the release binaries).
+3. Publish every optional dependency in `package.json` by running `pnpm prepublishOnly` (which executes `napi prepublish -t npm` and pushes `rush-fs-<platform>` packages such as `rush-fs-darwin-arm64`).
+4. Publish the main package with `pnpm publish --access public`. The `prepublishOnly` hook runs automatically, but running step 3 manually lets you verify each platform succeeded before tagging the main release.
+
+If any platform publish fails, fix it and re-run `pnpm prepublishOnly` before retrying `pnpm publish` so consumers never receive a release referring to missing optional dependencies.
 
 ## License
 
