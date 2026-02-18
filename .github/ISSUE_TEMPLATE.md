@@ -28,8 +28,12 @@ title: '[FEAT/BUG]'
 
 [List the issue numbers related to this issue, e.g. #123]
 
+## Benchmarks
+
+_(Benchmarks show that...)_
+
 ## Checklist
 
 - [ ] I have searched existing issues to ensure this is not a duplicate
 - [ ] I have provided a minimal reproduction (for bugs)
-- [ ] I am willing to submit a PR (Optional)
+- [ ] I have run `pnpm test` and passed all the test sample

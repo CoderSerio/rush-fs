@@ -13,6 +13,66 @@ export declare class Dirent {
   get path(): string
 }
 
+export declare class Stats {
+  readonly dev: number
+  readonly mode: number
+  readonly nlink: number
+  readonly uid: number
+  readonly gid: number
+  readonly rdev: number
+  readonly blksize: number
+  readonly ino: number
+  readonly size: number
+  readonly blocks: number
+  readonly atimeMs: number
+  readonly mtimeMs: number
+  readonly ctimeMs: number
+  readonly birthtimeMs: number
+  isFile(): boolean
+  isDirectory(): boolean
+  isSymbolicLink(): boolean
+  isBlockDevice(): boolean
+  isCharacterDevice(): boolean
+  isFIFO(): boolean
+  isSocket(): boolean
+  get atime(): number
+  get mtime(): number
+  get ctime(): number
+  get birthtime(): number
+}
+
+export declare function access(path: string, mode?: number | undefined | null): Promise<unknown>
+
+export declare function accessSync(path: string, mode?: number | undefined | null): void
+
+export declare function appendFile(
+  path: string,
+  data: string | Buffer,
+  options?: WriteFileOptions | undefined | null,
+): Promise<unknown>
+
+export declare function appendFileSync(
+  path: string,
+  data: string | Buffer,
+  options?: WriteFileOptions | undefined | null,
+): void
+
+export declare function chmod(path: string, mode: number): Promise<unknown>
+
+export declare function chmodSync(path: string, mode: number): void
+
+export declare function chown(path: string, uid: number, gid: number): Promise<unknown>
+
+export declare function chownSync(path: string, uid: number, gid: number): void
+
+export declare function copyFile(src: string, dest: string, mode?: number | undefined | null): Promise<unknown>
+
+export declare function copyFileSync(src: string, dest: string, mode?: number | undefined | null): void
+
+export declare function exists(path: string): Promise<unknown>
+
+export declare function existsSync(path: string): boolean
+
 export declare function glob(pattern: string, options?: GlobOptions | undefined | null): Promise<unknown>
 
 export interface GlobOptions {
@@ -27,6 +87,19 @@ export declare function globSync(
   pattern: string,
   options?: GlobOptions | undefined | null,
 ): Array<string> | Array<Dirent>
+
+export declare function lstat(path: string): Promise<unknown>
+
+export declare function lstatSync(path: string): Stats
+
+export declare function mkdir(path: string, options?: MkdirOptions | undefined | null): Promise<unknown>
+
+export interface MkdirOptions {
+  recursive?: boolean
+  mode?: number
+}
+
+export declare function mkdirSync(path: string, options?: MkdirOptions | undefined | null): string | null
 
 export declare function readdir(path: string, options?: ReaddirOptions | undefined | null): Promise<unknown>
 
@@ -55,7 +128,32 @@ export declare function readdirSync(
   options?: ReaddirOptions | undefined | null,
 ): Array<string> | Array<Dirent>
 
+export declare function readFile(path: string, options?: ReadFileOptions | undefined | null): Promise<unknown>
+
+export interface ReadFileOptions {
+  encoding?: string
+  flag?: string
+}
+
+export declare function readFileSync(path: string, options?: ReadFileOptions | undefined | null): string | Buffer
+
+export declare function readlink(path: string): Promise<unknown>
+
+export declare function readlinkSync(path: string): string
+
+export declare function realpath(path: string): Promise<unknown>
+
+export declare function realpathSync(path: string): string
+
+export declare function rename(oldPath: string, newPath: string): Promise<unknown>
+
+export declare function renameSync(oldPath: string, newPath: string): void
+
 export declare function rm(path: string, options?: RmOptions | undefined | null): Promise<unknown>
+
+export declare function rmdir(path: string): Promise<unknown>
+
+export declare function rmdirSync(path: string): void
 
 /** * Asynchronously removes files and
  * directories (modeled on the standard POSIX `rm` utility).
@@ -78,3 +176,37 @@ export interface RmOptions {
 }
 
 export declare function rmSync(path: string, options?: RmOptions | undefined | null): void
+
+export declare function stat(path: string): Promise<unknown>
+
+export declare function statSync(path: string): Stats
+
+export declare function truncate(path: string, len?: number | undefined | null): Promise<unknown>
+
+export declare function truncateSync(path: string, len?: number | undefined | null): void
+
+export declare function unlink(path: string): Promise<unknown>
+
+export declare function unlinkSync(path: string): void
+
+export declare function utimes(path: string, atime: number, mtime: number): Promise<unknown>
+
+export declare function utimesSync(path: string, atime: number, mtime: number): void
+
+export declare function writeFile(
+  path: string,
+  data: string | Buffer,
+  options?: WriteFileOptions | undefined | null,
+): Promise<unknown>
+
+export interface WriteFileOptions {
+  encoding?: string
+  mode?: number
+  flag?: string
+}
+
+export declare function writeFileSync(
+  path: string,
+  data: string | Buffer,
+  options?: WriteFileOptions | undefined | null,
+): void

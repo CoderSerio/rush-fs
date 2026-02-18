@@ -18,6 +18,9 @@ remove_dir_all = "1.0.0"
 serde          = "1.0.228"
 walkdir        = "2.5.0"
 
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
 [build-dependencies]
 napi-build = "2"
 

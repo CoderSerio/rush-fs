@@ -1,5 +1,7 @@
 # Hyper-FS
 
+[English](./README.md) | 中文
+
 <p align="center">
   <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
   <img src="https://img.shields.io/npm/v/hyper-fs?style=flat-square" alt="NPM Version">
@@ -7,10 +9,10 @@
 </p>
 
 <p align="center">
-  A high-performance, drop-in replacement for Node.js <code>fs</code> module, powered by Rust.
+  由 Rust 驱动的高性能 Node.js <code>fs</code> 模块「即插即用」替代品。
 </p>
 
-## Installation (⚠️ Not Ready Yet)
+## 安装（⚠️ 暂未就绪）
 
 ```bash
 npm install hyper-fs
@@ -18,20 +20,20 @@ npm install hyper-fs
 pnpm add hyper-fs
 ```
 
-## Status & Roadmap
+## 状态与路线图
 
-We are rewriting `fs` APIs one by one.
+我们正在逐个重写 `fs` 的 API。
 
-> **Legend**
+> **图例**
 >
-> - ✅: Fully Supported
-> - 🚧: Partially Supported / WIP
-> - ✨：New feature from hyper-fs
-> - ❌: Not Supported Yet
+> - ✅：完全支持
+> - 🚧：部分支持 / 开发中
+> - ✨：hyper-fs 的新增能力
+> - ❌：暂未支持
 
 ### `readdir`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string; // ✅
   options?: {
@@ -41,7 +43,7 @@ We are rewriting `fs` APIs one by one.
     concurrency?: number; // ✨
   };
   ```
-- **Return Type**:
+- **返回类型**：
   ```ts
     string[]
     | {
@@ -53,7 +55,7 @@ We are rewriting `fs` APIs one by one.
 
 ### `readFile`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string; // ✅
   options?: {
@@ -61,11 +63,11 @@ We are rewriting `fs` APIs one by one.
     flag?: string; // ❌
   };
   ```
-- **Return Type**: `string | Buffer`
+- **返回类型**：`string | Buffer`
 
 ### `writeFile`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string; // ✅
   data: string | Buffer; // ✅
@@ -78,7 +80,7 @@ We are rewriting `fs` APIs one by one.
 
 ### `appendFile`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string; // ✅
   data: string | Buffer; // ✅
@@ -91,7 +93,7 @@ We are rewriting `fs` APIs one by one.
 
 ### `copyFile`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   src: string; // ✅
   dest: string; // ✅
@@ -100,7 +102,7 @@ We are rewriting `fs` APIs one by one.
 
 ### `mkdir`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string; // ✅
   options?: {
@@ -108,52 +110,52 @@ We are rewriting `fs` APIs one by one.
     mode?: number; // ✅
   };
   ```
-- **Return Type**: `string | undefined` (first created path when recursive)
+- **返回类型**：`string | undefined`（recursive 模式下返回首个创建的路径）
 
 ### `rm`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string; // ✅
   options?: {
     force?: boolean; // ✅
     maxRetries?: number; // ❌
-    recursive?: boolean; // ✅
     retryDelay?: number; // ❌
+    recursive?: boolean; // ✅
     concurrency?: number; // ✨
   };
   ```
 
 ### `rmdir`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string // ✅
   ```
 
 ### `stat`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string // ✅
   ```
-- **Return Type**: `Stats` (dev, mode, nlink, uid, gid, rdev, blksize, ino, size, blocks, atimeMs, mtimeMs, ctimeMs, birthtimeMs + isFile/isDirectory/isSymbolicLink/...)
+- **返回类型**：`Stats`（dev, mode, nlink, uid, gid, rdev, blksize, ino, size, blocks, atimeMs, mtimeMs, ctimeMs, birthtimeMs + isFile/isDirectory/isSymbolicLink/...）
 
 ### `lstat`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string // ✅
   ```
-- **Return Type**: `Stats`
+- **返回类型**：`Stats`
 
 ### `fstat`
 
-- **Status**: ❌
+- **状态**：❌
 
 ### `access`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string; // ✅
   mode?: number; // ✅ (F_OK, R_OK, W_OK, X_OK)
@@ -161,34 +163,34 @@ We are rewriting `fs` APIs one by one.
 
 ### `exists`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string // ✅
   ```
-- **Return Type**: `boolean`
+- **返回类型**：`boolean`
 
 ### `open`
 
-- **Status**: ❌
+- **状态**：❌
 
 ### `opendir`
 
-- **Status**: ❌
+- **状态**：❌
 
 ### `close`
 
-- **Status**: ❌
+- **状态**：❌
 
 ### `unlink`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string // ✅
   ```
 
 ### `rename`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   oldPath: string // ✅
   newPath: string // ✅
@@ -196,23 +198,23 @@ We are rewriting `fs` APIs one by one.
 
 ### `readlink`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string // ✅
   ```
-- **Return Type**: `string`
+- **返回类型**：`string`
 
 ### `realpath`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string // ✅
   ```
-- **Return Type**: `string`
+- **返回类型**：`string`
 
 ### `chmod`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string // ✅
   mode: number // ✅
@@ -220,7 +222,7 @@ We are rewriting `fs` APIs one by one.
 
 ### `chown`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string // ✅
   uid: number // ✅
@@ -229,7 +231,7 @@ We are rewriting `fs` APIs one by one.
 
 ### `utimes`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string // ✅
   atime: number // ✅
@@ -238,7 +240,7 @@ We are rewriting `fs` APIs one by one.
 
 ### `truncate`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   path: string; // ✅
   len?: number; // ✅
@@ -246,7 +248,7 @@ We are rewriting `fs` APIs one by one.
 
 ### `glob`
 
-- **Node.js Arguments**:
+- **Node.js 参数**：
   ```ts
   pattern: string; // ✅
   options?: {
@@ -260,41 +262,41 @@ We are rewriting `fs` APIs one by one.
 
 ### `watch`
 
-- **Status**: ❌
+- **状态**：❌
 
-## Usage
+## 用法
 
 ```ts
 import { readdir, stat, readFile, writeFile, mkdir, rm } from 'hyper-fs'
 
-// Read directory
+// 读取目录
 const files = await readdir('./src')
 
-// Recursive with file types
+// 递归 + 返回文件类型
 const entries = await readdir('./src', {
   recursive: true,
   withFileTypes: true,
 })
 
-// Read / write files
+// 读写文件
 const content = await readFile('./package.json', { encoding: 'utf8' })
 await writeFile('./output.txt', 'hello world')
 
-// File stats
+// 文件信息
 const s = await stat('./package.json')
 console.log(s.size, s.isFile())
 
-// Create directory
+// 创建目录
 await mkdir('./new-dir', { recursive: true })
 
-// Remove
+// 删除
 await rm('./temp', { recursive: true, force: true })
 ```
 
-## Contributing
+## 贡献
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for the complete development guide — from environment setup, referencing Node.js source, writing Rust implementations, to testing and benchmarking.
+参阅 [CONTRIBUTING.md](./CONTRIBUTING.md) — 完整的开发指南，涵盖环境搭建、参考 Node.js 源码、编写 Rust 实现、测试与性能基准。
 
-## License
+## 许可证
 
 MIT
