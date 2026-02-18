@@ -1,21 +1,27 @@
 {
   "name": "hyper-fs",
   "version": "0.0.1",
-  "description": "Template project for writing node package with napi-rs",
+  "description": "High-performance drop-in replacement for Node.js fs module, powered by Rust",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/napi-rs/package-template.git"
+    "url": "git+https://github.com/hyper-fs/hyper-fs.git"
   },
   "license": "MIT",
   "browser": "browser.js",
   "keywords": [
+    "fs",
+    "filesystem",
+    "file-system",
+    "performance",
+    "rust",
+    "napi",
     "napi-rs",
-    "NAPI",
-    "N-API",
-    "Rust",
-    "node-addon",
-    "node-addon-api"
+    "native",
+    "readdir",
+    "glob",
+    "readFile",
+    "writeFile"
   ],
   "files": [
     "index.d.ts",
@@ -32,7 +38,7 @@
     ]
   },
   "engines": {
-    "node": ">= 10.16.0 < 11 || >= 11.8.0 < 12 || >= 12.0.0"
+    "node": ">= 18.0.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

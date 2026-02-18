@@ -10,7 +10,7 @@
   A high-performance, drop-in replacement for Node.js <code>fs</code> module, powered by Rust.
 </p>
 
-## Installation (⚠️ Not Ready Yet)
+## Installation
 
 ```bash
 npm install hyper-fs

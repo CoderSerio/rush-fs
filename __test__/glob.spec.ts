@@ -47,25 +47,16 @@ test('globSync: should support exclude option', (t) => {
   t.true(filteredFiles.length < allFiles.length)
 })
 
-test('globSync: should respect git_ignore (default: true)', (t) => {
-  // 'target' directory is usually gitignored in Rust projects
-  // Note: This test assumes 'target' directory exists and is ignored.
-  // If running in a fresh clone without build, target might not exist.
-  // We can skip if target doesn't exist, or just check node_modules which is definitely ignored?
-  // node_modules is ignored by default in many setups but strict gitignore check depends on .gitignore file.
-
-  // Let's assume 'target' exists because we built the project
+test('globSync: should respect gitIgnore (default: true)', (t) => {
+  // When gitIgnore: true (default), files in .gitignore are excluded.
+  // When gitIgnore: false, they are included.
   const ignoredFiles = globSync('target/**/*.d', { cwd: CWD })
-  // Should be empty or very few if ignored (actually cargo ignores target/)
-  // But wait, standard_filters includes .ignore and .gitignore.
-
-  // If we force git_ignore: false, we should see files
-  const includedFiles = globSync('target/**/*.d', { cwd: CWD, git_ignore: false })
+  const includedFiles = globSync('target/**/*.d', { cwd: CWD, gitIgnore: false })
 
   if (includedFiles.length > 0) {
     t.true(ignoredFiles.length < includedFiles.length, 'Should find fewer files when respecting gitignore')
   } else {
-    t.pass('Target directory empty or not present, skipping git_ignore comparison')
+    t.pass('Target directory empty or not present, skipping gitIgnore comparison')
   }
 })
 

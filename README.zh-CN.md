@@ -12,7 +12,7 @@
   由 Rust 驱动的高性能 Node.js <code>fs</code> 模块「即插即用」替代品。
 </p>
 
-## 安装（⚠️ 暂未就绪）
+## 安装
 
 ```bash
 npm install hyper-fs

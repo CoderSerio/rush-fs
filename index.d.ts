@@ -45,7 +45,7 @@ export declare class Stats {
   get birthtime(): Date
 }
 
-export declare function access(path: string, mode?: number | undefined | null): Promise<unknown>
+export declare function access(path: string, mode?: number | undefined | null): Promise<void>
 
 export declare function accessSync(path: string, mode?: number | undefined | null): void
 
@@ -53,7 +53,7 @@ export declare function appendFile(
   path: string,
   data: string | Buffer,
   options?: WriteFileOptions | undefined | null,
-): Promise<unknown>
+): Promise<void>
 
 export declare function appendFileSync(
   path: string,
@@ -61,19 +61,19 @@ export declare function appendFileSync(
   options?: WriteFileOptions | undefined | null,
 ): void
 
-export declare function chmod(path: string, mode: number): Promise<unknown>
+export declare function chmod(path: string, mode: number): Promise<void>
 
 export declare function chmodSync(path: string, mode: number): void
 
-export declare function chown(path: string, uid: number, gid: number): Promise<unknown>
+export declare function chown(path: string, uid: number, gid: number): Promise<void>
 
 export declare function chownSync(path: string, uid: number, gid: number): void
 
-export declare function copyFile(src: string, dest: string, mode?: number | undefined | null): Promise<unknown>
+export declare function copyFile(src: string, dest: string, mode?: number | undefined | null): Promise<void>
 
 export declare function copyFileSync(src: string, dest: string, mode?: number | undefined | null): void
 
-export declare function cp(src: string, dest: string, options?: CpOptions | undefined | null): Promise<unknown>
+export declare function cp(src: string, dest: string, options?: CpOptions | undefined | null): Promise<void>
 
 export interface CpOptions {
   recursive?: boolean
@@ -91,17 +91,21 @@ export interface CpOptions {
 
 export declare function cpSync(src: string, dest: string, options?: CpOptions | undefined | null): void
 
-export declare function exists(path: string): Promise<unknown>
+export declare function exists(path: string): Promise<boolean>
 
 export declare function existsSync(path: string): boolean
 
-export declare function glob(pattern: string, options?: GlobOptions | undefined | null): Promise<unknown>
+export declare function glob(
+  pattern: string,
+  options?: GlobOptions | undefined | null,
+): Promise<Array<string> | Array<Dirent>>
 
 export interface GlobOptions {
   cwd?: string
   withFileTypes?: boolean
   exclude?: Array<string>
   concurrency?: number
+  /** Respect .gitignore / .ignore files (default: true) */
   gitIgnore?: boolean
 }
 
@@ -110,15 +114,15 @@ export declare function globSync(
   options?: GlobOptions | undefined | null,
 ): Array<string> | Array<Dirent>
 
-export declare function link(existingPath: string, newPath: string): Promise<unknown>
+export declare function link(existingPath: string, newPath: string): Promise<void>
 
 export declare function linkSync(existingPath: string, newPath: string): void
 
-export declare function lstat(path: string): Promise<unknown>
+export declare function lstat(path: string): Promise<Stats>
 
 export declare function lstatSync(path: string): Stats
 
-export declare function mkdir(path: string, options?: MkdirOptions | undefined | null): Promise<unknown>
+export declare function mkdir(path: string, options?: MkdirOptions | undefined | null): Promise<string | null>
 
 export interface MkdirOptions {
   recursive?: boolean
@@ -127,29 +131,19 @@ export interface MkdirOptions {
 
 export declare function mkdirSync(path: string, options?: MkdirOptions | undefined | null): string | null
 
-export declare function mkdtemp(prefix: string): Promise<unknown>
+export declare function mkdtemp(prefix: string): Promise<string>
 
 export declare function mkdtempSync(prefix: string): string
 
-export declare function readdir(path: string, options?: ReaddirOptions | undefined | null): Promise<unknown>
+export declare function readdir(
+  path: string,
+  options?: ReaddirOptions | undefined | null,
+): Promise<Array<string> | Array<Dirent>>
 
-/** * Reads the contents of a directory.
- * @param {string | Buffer | URL} path
- * @param {string | {
- *   encoding?: string;
- *   withFileTypes?: boolean;
- *   recursive?: boolean;
- *   }} [options]
- * @param {(
- *   err?: Error,
- *   files?: string[] | Buffer[] | Dirent[]
- * ) => any} callback
- * @returns {void}
- */
 export interface ReaddirOptions {
   /**
    * File name encoding. 'utf8' (default) returns strings.
-   * 'buffer' returns Buffer objects for each name.
+   * 'buffer' returns Buffer objects for each name (not yet supported, treated as 'utf8').
    * Other values are treated as 'utf8'.
    */
   encoding?: string
@@ -164,7 +158,7 @@ export declare function readdirSync(
   options?: ReaddirOptions | undefined | null,
 ): Array<string> | Array<Dirent>
 
-export declare function readFile(path: string, options?: ReadFileOptions | undefined | null): Promise<unknown>
+export declare function readFile(path: string, options?: ReadFileOptions | undefined | null): Promise<string | Buffer>
 
 export interface ReadFileOptions {
   encoding?: string
@@ -173,21 +167,21 @@ export interface ReadFileOptions {
 
 export declare function readFileSync(path: string, options?: ReadFileOptions | undefined | null): string | Buffer
 
-export declare function readlink(path: string): Promise<unknown>
+export declare function readlink(path: string): Promise<string>
 
 export declare function readlinkSync(path: string): string
 
-export declare function realpath(path: string): Promise<unknown>
+export declare function realpath(path: string): Promise<string>
 
 export declare function realpathSync(path: string): string
 
-export declare function rename(oldPath: string, newPath: string): Promise<unknown>
+export declare function rename(oldPath: string, newPath: string): Promise<void>
 
 export declare function renameSync(oldPath: string, newPath: string): void
 
-export declare function rm(path: string, options?: RmOptions | undefined | null): Promise<unknown>
+export declare function rm(path: string, options?: RmOptions | undefined | null): Promise<void>
 
-export declare function rmdir(path: string): Promise<unknown>
+export declare function rmdir(path: string): Promise<void>
 
 export declare function rmdirSync(path: string): void
 
@@ -197,8 +191,7 @@ export declare function rmdirSync(path: string): void
  * - `force`: When true, silently ignore errors when path does not exist.
  * - `recursive`: When true, remove directory and all its contents.
  * - `maxRetries`: If an `EBUSY`, `EMFILE`, `ENFILE`, `ENOTEMPTY`, or `EPERM` error is
- *   encountered, Node.js retries the operation with a linear backoff of `retryDelay` ms longer on
- *   each try. This option represents the number of retries.
+ *   encountered, retries with a linear backoff of `retryDelay` ms on each try.
  * - `retryDelay`: The amount of time in milliseconds to wait between retries (default 100ms).
  * - `concurrency` (hyper-fs extension): Number of parallel threads for recursive removal.
  */
@@ -212,23 +205,33 @@ export interface RmOptions {
 
 export declare function rmSync(path: string, options?: RmOptions | undefined | null): void
 
-export declare function stat(path: string): Promise<unknown>
+export declare function stat(path: string): Promise<Stats>
 
 export declare function statSync(path: string): Stats
 
-export declare function symlink(target: string, path: string, symlinkType?: string | undefined | null): Promise<unknown>
+export declare function symlink(
+  target: string,
+  path: string,
+  /** On Windows: 'file' | 'dir' | 'junction'. Ignored on Unix. */
+  symlinkType?: string | undefined | null,
+): Promise<void>
 
-export declare function symlinkSync(target: string, path: string, symlinkType?: string | undefined | null): void
+export declare function symlinkSync(
+  target: string,
+  path: string,
+  /** On Windows: 'file' | 'dir' | 'junction'. Ignored on Unix. */
+  symlinkType?: string | undefined | null,
+): void
 
-export declare function truncate(path: string, len?: number | undefined | null): Promise<unknown>
+export declare function truncate(path: string, len?: number | undefined | null): Promise<void>
 
 export declare function truncateSync(path: string, len?: number | undefined | null): void
 
-export declare function unlink(path: string): Promise<unknown>
+export declare function unlink(path: string): Promise<void>
 
 export declare function unlinkSync(path: string): void
 
-export declare function utimes(path: string, atime: number, mtime: number): Promise<unknown>
+export declare function utimes(path: string, atime: number, mtime: number): Promise<void>
 
 export declare function utimesSync(path: string, atime: number, mtime: number): void
 
@@ -236,7 +239,7 @@ export declare function writeFile(
   path: string,
   data: string | Buffer,
   options?: WriteFileOptions | undefined | null,
-): Promise<unknown>
+): Promise<void>
 
 export interface WriteFileOptions {
   encoding?: string
