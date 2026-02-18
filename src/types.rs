@@ -163,10 +163,13 @@ impl Stats {
 }
 
 fn ms_to_datetime(ms: f64) -> DateTime<Local> {
-  // 先换算到纳秒整数，再用 Euclidean 除法拆分，保证 nsecs 始终非负
-  let total_ns = (ms * 1_000_000.0).round() as i64;
-  let secs = total_ns.div_euclid(1_000_000_000);
-  let nsecs = total_ns.rem_euclid(1_000_000_000) as u32;
+  // Node.js Stats.mtime (Date) effectively rounds the underlying *Ms value to
+  // the nearest integer millisecond. Align with that behavior to avoid 1ms
+  // mismatches in tests.
+  let ms_rounded = ms.round() as i64;
+  let secs = ms_rounded.div_euclid(1_000);
+  let rem_ms = ms_rounded.rem_euclid(1_000) as u32;
+  let nsecs = rem_ms * 1_000_000;
   Local
     .timestamp_opt(secs, nsecs)
     .single()

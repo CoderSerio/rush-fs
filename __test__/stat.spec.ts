@@ -113,8 +113,11 @@ test('statSync: atime Date should be correct for pre-epoch (negative ms) timesta
   const file = join(dir, 'pre-epoch.txt')
   nodeFs.writeFileSync(file, 'x')
   // -500 ms = 1969-12-31T23:59:59.500Z
-  const preEpochSecs = -0.5
-  nodeFs.utimesSync(file, preEpochSecs, preEpochSecs)
+  // NOTE: Passing a negative number to utimesSync is not reliably supported across
+  // platforms/Node versions. Use Date objects to ensure the pre-epoch timestamp
+  // is actually applied.
+  const preEpoch = new Date(-500)
+  nodeFs.utimesSync(file, preEpoch, preEpoch)
 
   const hyperStat = statSync(file)
   const nodeStat = nodeFs.statSync(file)

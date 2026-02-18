@@ -8,29 +8,29 @@ use std::path::Path;
 #[cfg(unix)]
 use std::os::unix::fs::MetadataExt;
 
+fn secs_nanos_to_ms(secs: i64, nsecs: i64) -> f64 {
+  (secs as f64) * 1000.0 + (nsecs as f64) / 1_000_000.0
+}
+
+fn system_time_to_ms(t: std::time::SystemTime) -> f64 {
+  use std::time::UNIX_EPOCH;
+  match t.duration_since(UNIX_EPOCH) {
+    Ok(d) => d.as_secs_f64() * 1000.0,
+    Err(e) => -(e.duration().as_secs_f64() * 1000.0),
+  }
+}
+
 fn metadata_to_stats(meta: &fs::Metadata) -> Stats {
   #[cfg(unix)]
   {
-    use std::time::UNIX_EPOCH;
-    let atime_ms = meta
-      .accessed()
-      .ok()
-      .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-      .map(|d| d.as_secs_f64() * 1000.0)
-      .unwrap_or(0.0);
-    let mtime_ms = meta
-      .modified()
-      .ok()
-      .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-      .map(|d| d.as_secs_f64() * 1000.0)
-      .unwrap_or(0.0);
-    let ctime_ms = (meta.ctime() as f64) * 1000.0 + (meta.ctime_nsec() as f64) / 1_000_000.0;
+    let atime_ms = secs_nanos_to_ms(meta.atime(), meta.atime_nsec());
+    let mtime_ms = secs_nanos_to_ms(meta.mtime(), meta.mtime_nsec());
+    let ctime_ms = secs_nanos_to_ms(meta.ctime(), meta.ctime_nsec());
     let birthtime_ms = meta
       .created()
       .ok()
-      .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-      .map(|d| d.as_secs_f64() * 1000.0)
-      .unwrap_or(0.0);
+      .map(system_time_to_ms)
+      .unwrap_or(ctime_ms);
 
     Stats {
       dev: meta.dev() as f64,
@@ -52,23 +52,20 @@ fn metadata_to_stats(meta: &fs::Metadata) -> Stats {
 
   #[cfg(not(unix))]
   {
-    use std::time::UNIX_EPOCH;
     let to_ms = |t: std::io::Result<std::time::SystemTime>| -> f64 {
-      t.ok()
-        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-        .map(|d| d.as_secs_f64() * 1000.0)
-        .unwrap_or(0.0)
+      t.ok().map(system_time_to_ms).unwrap_or(0.0)
     };
     let atime_ms = to_ms(meta.accessed());
     let mtime_ms = to_ms(meta.modified());
     let birthtime_ms = to_ms(meta.created());
 
+    // Match node:fs on Windows: include basic permission bits.
     let mode = if meta.is_dir() {
-      0o040000u32
+      0o040000u32 | 0o777
     } else if meta.is_symlink() {
-      0o120000u32
+      0o120000u32 | 0o777
     } else {
-      0o100000u32
+      0o100000u32 | 0o666
     };
 
     Stats {

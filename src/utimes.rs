@@ -3,10 +3,10 @@ use napi::Task;
 use napi_derive::napi;
 use std::path::Path;
 
-#[cfg(not(unix))]
+#[cfg(not(any(unix, windows)))]
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-#[cfg(not(unix))]
+#[cfg(not(any(unix, windows)))]
 fn to_system_time(time_secs: f64) -> SystemTime {
   if time_secs >= 0.0 {
     UNIX_EPOCH + Duration::from_secs_f64(time_secs)
@@ -59,7 +59,54 @@ fn utimes_impl(path_str: String, atime: f64, mtime: f64) -> Result<()> {
     }
   }
 
-  #[cfg(not(unix))]
+  #[cfg(windows)]
+  {
+    use std::fs;
+    use std::os::windows::io::AsRawHandle;
+
+    use windows_sys::Win32::Foundation::FILETIME;
+    use windows_sys::Win32::Storage::FileSystem::SetFileTime;
+
+    fn secs_to_filetime(time_secs: f64) -> FILETIME {
+      // Convert Unix epoch seconds to Windows FILETIME (100ns ticks since 1601-01-01).
+      const EPOCH_DIFF_SECS: f64 = 11_644_473_600.0;
+      let windows_secs = time_secs + EPOCH_DIFF_SECS;
+      let ticks_100ns = (windows_secs * 10_000_000.0).round() as i128;
+      let lo = (ticks_100ns & 0xFFFF_FFFF) as u32;
+      let hi = ((ticks_100ns >> 32) & 0xFFFF_FFFF) as u32;
+      FILETIME {
+        dwLowDateTime: lo,
+        dwHighDateTime: hi,
+      }
+    }
+
+    let atime_ft = secs_to_filetime(atime);
+    let mtime_ft = secs_to_filetime(mtime);
+
+    // FILE_WRITE_ATTRIBUTES is enough for SetFileTime.
+    let file = fs::OpenOptions::new()
+      .write(true)
+      .open(path)
+      .map_err(|e| Error::from_reason(e.to_string()))?;
+
+    let ok = unsafe {
+      SetFileTime(
+        file.as_raw_handle() as isize,
+        std::ptr::null(),
+        &atime_ft as *const FILETIME,
+        &mtime_ft as *const FILETIME,
+      )
+    };
+    if ok == 0 {
+      return Err(Error::from_reason(format!(
+        "{}, utimes '{}'",
+        std::io::Error::last_os_error(),
+        path.to_string_lossy()
+      )));
+    }
+  }
+
+  #[cfg(not(any(unix, windows)))]
   {
     use std::fs;
     let atime_sys = to_system_time(atime);
@@ -71,7 +118,7 @@ fn utimes_impl(path_str: String, atime: f64, mtime: f64) -> Result<()> {
     file
       .set_modified(mtime_sys)
       .map_err(|e| Error::from_reason(e.to_string()))?;
-    let _ = atime_sys; // Windows doesn't easily support setting atime via std
+    let _ = atime_sys;
   }
 
   Ok(())

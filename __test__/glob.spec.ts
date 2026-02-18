@@ -161,9 +161,11 @@ test('dual-run: globSync "src/*" should match node:fs.globSync behavior for dire
   try {
     // @ts-ignore - globSync 在旧版 Node 可能不存在
     const nodeGlob = nodeFs.globSync as ((p: string, o: object) => string[]) | undefined
-    if (typeof nodeGlob === 'function') {
-      nodeResults.push(...nodeGlob('src/*', { cwd: base }))
+    if (typeof nodeGlob !== 'function') {
+      t.pass('node:fs.globSync not available, skipping dual-run comparison')
+      return
     }
+    nodeResults.push(...nodeGlob('src/*', { cwd: base }))
   } catch {
     // 旧版 Node.js 不支持 fs.globSync，跳过对比
     t.pass('node:fs.globSync not available, skipping dual-run comparison')
