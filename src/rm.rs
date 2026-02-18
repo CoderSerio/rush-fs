@@ -5,20 +5,15 @@ use rayon::prelude::*;
 use std::fs;
 use std::path::Path;
 
-// nodejs rm jsdoc:
-/**
- * Asynchronously removes files and
- * directories (modeled on the standard POSIX `rm` utility).
- * @param {string | Buffer | URL} path
- * @param {{
- *   force?: boolean;
- *   maxRetries?: number;
- *   recursive?: boolean;
- *   retryDelay?: number;
- *   }} [options]
- * @param {(err?: Error) => any} callback
- * @returns {void}
- */
+/// Removes files and directories (modeled on the standard POSIX `rm` utility).
+///
+/// - `force`: When true, silently ignore errors when path does not exist.
+/// - `recursive`: When true, remove directory and all its contents.
+/// - `maxRetries`: If an `EBUSY`, `EMFILE`, `ENFILE`, `ENOTEMPTY`, or `EPERM` error is
+///   encountered, Node.js retries the operation with a linear backoff of `retryDelay` ms longer on
+///   each try. This option represents the number of retries.
+/// - `retryDelay`: The amount of time in milliseconds to wait between retries (default 100ms).
+/// - `concurrency` (hyper-fs extension): Number of parallel threads for recursive removal.
 
 #[napi(object)]
 #[derive(Clone)]

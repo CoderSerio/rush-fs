@@ -35,3 +35,16 @@ test('readFile: async should read file', async (t) => {
 test('readFile: async should throw on non-existent file', async (t) => {
   await t.throwsAsync(async () => await readFile('./no-such-file'), { message: /ENOENT/ })
 })
+
+test('dual-run: readFileSync Buffer should match node:fs byte-for-byte', (t) => {
+  const nodeResult = nodeFs.readFileSync('./package.json')
+  const hyperResult = readFileSync('./package.json') as Buffer
+  t.true(Buffer.isBuffer(hyperResult))
+  t.deepEqual(hyperResult, nodeResult)
+})
+
+test('dual-run: readFileSync utf8 string should match node:fs', (t) => {
+  const nodeResult = nodeFs.readFileSync('./package.json', 'utf8')
+  const hyperResult = readFileSync('./package.json', { encoding: 'utf8' }) as string
+  t.is(hyperResult, nodeResult)
+})

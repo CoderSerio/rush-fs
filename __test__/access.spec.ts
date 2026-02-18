@@ -1,10 +1,21 @@
 import test from 'ava'
 import * as nodeFs from 'node:fs'
 import { accessSync, access } from '../index.js'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
 
 const F_OK = 0
 const R_OK = 4
 const W_OK = 2
+const X_OK = 1
+
+function tmpFile(name: string): string {
+  const dir = join(tmpdir(), `hyper-fs-test-access-${Date.now()}-${Math.random().toString(36).slice(2)}`)
+  nodeFs.mkdirSync(dir, { recursive: true })
+  const file = join(dir, name)
+  nodeFs.writeFileSync(file, 'test')
+  return file
+}
 
 test('accessSync: should succeed for existing file (F_OK)', (t) => {
   t.notThrows(() => accessSync('./package.json'))
@@ -71,4 +82,37 @@ test('dual-run: accessSync should both throw for non-existent file', (t) => {
   }
 
   t.is(hyperThrew, nodeThrew)
+})
+
+test('accessSync: X_OK should succeed for executable file', (t) => {
+  if (process.platform === 'win32') {
+    t.pass('Skipping X_OK test on Windows')
+    return
+  }
+  const file = tmpFile('exec.sh')
+  nodeFs.chmodSync(file, 0o755)
+  t.notThrows(() => accessSync(file, X_OK))
+})
+
+test('accessSync: should throw ENOENT (not EACCES) for missing file', (t) => {
+  const target = '/tmp/no-such-file-access-' + Date.now()
+  t.throws(() => accessSync(target), { message: /ENOENT/ })
+})
+
+test('dual-run: accessSync ENOENT error message starts with ENOENT like node:fs', (t) => {
+  const target = '/tmp/no-such-file-access-dual-' + Date.now()
+  let nodeMsg = ''
+  let hyperMsg = ''
+  try {
+    nodeFs.accessSync(target)
+  } catch (e) {
+    nodeMsg = (e as Error).message
+  }
+  try {
+    accessSync(target)
+  } catch (e) {
+    hyperMsg = (e as Error).message
+  }
+  t.true(nodeMsg.startsWith('ENOENT'))
+  t.true(hyperMsg.startsWith('ENOENT'))
 })

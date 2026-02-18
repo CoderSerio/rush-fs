@@ -1,5 +1,6 @@
 import test from 'ava'
 import { symlinkSync, symlink, readlinkSync, statSync, lstatSync } from '../index.js'
+import * as nodeFs from 'node:fs'
 import { writeFileSync, mkdirSync, existsSync, readlinkSync as nodeReadlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -56,6 +57,30 @@ test('symlinkSync: should throw EEXIST if link path already exists', (t) => {
   writeFileSync(link, 'existing')
 
   t.throws(() => symlinkSync(target, link), { message: /EEXIST/ })
+})
+
+// ===== dual-run =====
+
+test('dual-run: symlinkSync result should match node:fs.symlinkSync', (t) => {
+  const dir = tmpDir()
+  const target = join(dir, 'dual-target.txt')
+  const hyperLink = join(dir, 'dual-hyper-link.txt')
+  const nodeLink = join(dir, 'dual-node-link.txt')
+  nodeFs.writeFileSync(target, 'hello')
+
+  nodeFs.symlinkSync(target, nodeLink)
+  symlinkSync(target, hyperLink)
+
+  // Both should be symlinks pointing to the same target
+  const nodeReadlink = nodeReadlinkSync(nodeLink, 'utf8')
+  const hyperReadlink = nodeReadlinkSync(hyperLink, 'utf8')
+  t.is(hyperReadlink, nodeReadlink)
+
+  // Both should resolve to the same file
+  const nodeLstat = nodeFs.lstatSync(nodeLink)
+  const hyperLstat = nodeFs.lstatSync(hyperLink)
+  t.is(hyperLstat.isSymbolicLink(), nodeLstat.isSymbolicLink())
+  t.true(hyperLstat.isSymbolicLink())
 })
 
 // ===== async =====

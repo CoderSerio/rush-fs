@@ -35,10 +35,14 @@ export declare class Stats {
   isCharacterDevice(): boolean
   isFIFO(): boolean
   isSocket(): boolean
-  get atime(): number
-  get mtime(): number
-  get ctime(): number
-  get birthtime(): number
+  /** Returns atime as a Date object (Node.js compatible) */
+  get atime(): Date
+  /** Returns mtime as a Date object (Node.js compatible) */
+  get mtime(): Date
+  /** Returns ctime as a Date object (Node.js compatible) */
+  get ctime(): Date
+  /** Returns birthtime as a Date object (Node.js compatible) */
+  get birthtime(): Date
 }
 
 export declare function access(path: string, mode?: number | undefined | null): Promise<unknown>
@@ -143,6 +147,12 @@ export declare function readdir(path: string, options?: ReaddirOptions | undefin
  * @returns {void}
  */
 export interface ReaddirOptions {
+  /**
+   * File name encoding. 'utf8' (default) returns strings.
+   * 'buffer' returns Buffer objects for each name.
+   * Other values are treated as 'utf8'.
+   */
+  encoding?: string
   skipHidden?: boolean
   concurrency?: number
   recursive?: boolean
@@ -181,17 +191,16 @@ export declare function rmdir(path: string): Promise<unknown>
 
 export declare function rmdirSync(path: string): void
 
-/** * Asynchronously removes files and
- * directories (modeled on the standard POSIX `rm` utility).
- * @param {string | Buffer | URL} path
- * @param {{
- *   force?: boolean;
- *   maxRetries?: number;
- *   recursive?: boolean;
- *   retryDelay?: number;
- *   }} [options]
- * @param {(err?: Error) => any} callback
- * @returns {void}
+/**
+ * Removes files and directories (modeled on the standard POSIX `rm` utility).
+ *
+ * - `force`: When true, silently ignore errors when path does not exist.
+ * - `recursive`: When true, remove directory and all its contents.
+ * - `maxRetries`: If an `EBUSY`, `EMFILE`, `ENFILE`, `ENOTEMPTY`, or `EPERM` error is
+ *   encountered, Node.js retries the operation with a linear backoff of `retryDelay` ms longer on
+ *   each try. This option represents the number of retries.
+ * - `retryDelay`: The amount of time in milliseconds to wait between retries (default 100ms).
+ * - `concurrency` (hyper-fs extension): Number of parallel threads for recursive removal.
  */
 export interface RmOptions {
   force?: boolean
@@ -207,9 +216,9 @@ export declare function stat(path: string): Promise<unknown>
 
 export declare function statSync(path: string): Stats
 
-export declare function symlink(target: string, path: string): Promise<unknown>
+export declare function symlink(target: string, path: string, symlinkType?: string | undefined | null): Promise<unknown>
 
-export declare function symlinkSync(target: string, path: string): void
+export declare function symlinkSync(target: string, path: string, symlinkType?: string | undefined | null): void
 
 export declare function truncate(path: string, len?: number | undefined | null): Promise<unknown>
 

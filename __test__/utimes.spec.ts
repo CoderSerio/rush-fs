@@ -61,3 +61,31 @@ test('utimes: async should throw on non-existent file', async (t) => {
     message: /ENOENT/,
   })
 })
+
+test('utimesSync: should accept Date objects as atime/mtime', (t) => {
+  const file = tmpFile('utimes-date.txt')
+  const atime = new Date('2020-01-01T00:00:00Z')
+  const mtime = new Date('2021-06-15T12:00:00Z')
+
+  utimesSync(file, atime.getTime() / 1000, mtime.getTime() / 1000)
+  const s = statSync(file)
+
+  t.is(Math.floor(s.atimeMs / 1000), Math.floor(atime.getTime() / 1000))
+  t.is(Math.floor(s.mtimeMs / 1000), Math.floor(mtime.getTime() / 1000))
+})
+
+test('dual-run: utimesSync Date values should match node:fs', (t) => {
+  const file1 = tmpFile('node-utimes-date.txt')
+  const file2 = tmpFile('hyper-utimes-date.txt')
+  const atimeSecs = 1577836800 // 2020-01-01
+  const mtimeSecs = 1623758400 // 2021-06-15
+
+  nodeUtimesSync(file1, atimeSecs, mtimeSecs)
+  utimesSync(file2, atimeSecs, mtimeSecs)
+
+  const nodeStat = nodeStatSync(file1)
+  const hyperStat = statSync(file2)
+
+  t.is(hyperStat.mtime.getTime(), nodeStat.mtime.getTime())
+  t.is(hyperStat.atime.getTime(), nodeStat.atime.getTime())
+})

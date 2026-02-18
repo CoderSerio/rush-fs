@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use chrono::{DateTime, Local, TimeZone};
 use napi_derive::napi;
 
 #[napi]
@@ -136,23 +137,36 @@ impl Stats {
     (self.mode & S_IFMT) == S_IFSOCK
   }
 
+  /// Returns atime as a Date object (Node.js compatible)
   #[napi(getter)]
-  pub fn atime(&self) -> f64 {
-    self.atime_ms
+  pub fn atime(&self) -> DateTime<Local> {
+    ms_to_datetime(self.atime_ms)
   }
 
+  /// Returns mtime as a Date object (Node.js compatible)
   #[napi(getter)]
-  pub fn mtime(&self) -> f64 {
-    self.mtime_ms
+  pub fn mtime(&self) -> DateTime<Local> {
+    ms_to_datetime(self.mtime_ms)
   }
 
+  /// Returns ctime as a Date object (Node.js compatible)
   #[napi(getter)]
-  pub fn ctime(&self) -> f64 {
-    self.ctime_ms
+  pub fn ctime(&self) -> DateTime<Local> {
+    ms_to_datetime(self.ctime_ms)
   }
 
+  /// Returns birthtime as a Date object (Node.js compatible)
   #[napi(getter)]
-  pub fn birthtime(&self) -> f64 {
-    self.birthtime_ms
+  pub fn birthtime(&self) -> DateTime<Local> {
+    ms_to_datetime(self.birthtime_ms)
   }
+}
+
+fn ms_to_datetime(ms: f64) -> DateTime<Local> {
+  let secs = (ms / 1000.0) as i64;
+  let nsecs = ((ms % 1000.0) * 1_000_000.0) as u32;
+  Local
+    .timestamp_opt(secs, nsecs)
+    .single()
+    .unwrap_or_else(|| Local.timestamp_opt(0, 0).unwrap())
 }

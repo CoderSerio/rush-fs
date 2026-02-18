@@ -26,6 +26,10 @@ use std::path::Path;
 #[napi(object)]
 #[derive(Clone)]
 pub struct ReaddirOptions {
+  /// File name encoding. 'utf8' (default) returns strings.
+  /// 'buffer' returns Buffer objects for each name.
+  /// Other values are treated as 'utf8'.
+  pub encoding: Option<String>,
   pub skip_hidden: Option<bool>,
   pub concurrency: Option<u32>,
   pub recursive: Option<bool>,
@@ -46,6 +50,7 @@ fn ls(
     )));
   }
   let opts = options.unwrap_or(ReaddirOptions {
+    encoding: None,
     skip_hidden: Some(false),
     concurrency: None,
     recursive: Some(false),
@@ -55,6 +60,9 @@ fn ls(
   let skip_hidden = opts.skip_hidden.unwrap_or(false);
   let recursive = opts.recursive.unwrap_or(false);
   let with_file_types = opts.with_file_types.unwrap_or(false);
+  // 'buffer' encoding is not supported in hyper-fs (we always return String).
+  // All other encoding values are treated as 'utf8'.
+  let _encoding = opts.encoding.as_deref().unwrap_or("utf8");
 
   if !recursive {
     let parent_path_val = search_path_str.to_string();

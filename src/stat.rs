@@ -97,11 +97,18 @@ fn stat_impl(path_str: String, follow_symlinks: bool) -> Result<Stats> {
   } else {
     fs::symlink_metadata(path)
   };
-  let meta = meta.map_err(|_| {
-    Error::from_reason(format!(
-      "ENOENT: no such file or directory, stat '{}'",
-      path.to_string_lossy()
-    ))
+  let meta = meta.map_err(|e| {
+    if e.kind() == std::io::ErrorKind::PermissionDenied {
+      Error::from_reason(format!(
+        "EACCES: permission denied, stat '{}'",
+        path.to_string_lossy()
+      ))
+    } else {
+      Error::from_reason(format!(
+        "ENOENT: no such file or directory, stat '{}'",
+        path.to_string_lossy()
+      ))
+    }
   })?;
   Ok(metadata_to_stats(&meta))
 }

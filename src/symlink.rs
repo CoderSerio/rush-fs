@@ -3,7 +3,10 @@ use napi::Task;
 use napi_derive::napi;
 use std::path::Path;
 
-fn symlink_impl(target: String, path_str: String) -> Result<()> {
+/// On Windows, `symlink_type` controls whether a file or directory symlink
+/// (or junction) is created. Valid values: 'file' | 'dir' | 'junction'.
+/// On Unix this parameter is ignored.
+fn symlink_impl(target: String, path_str: String, symlink_type: Option<String>) -> Result<()> {
   let path = Path::new(&path_str);
   let target_path = Path::new(&target);
 
@@ -16,6 +19,7 @@ fn symlink_impl(target: String, path_str: String) -> Result<()> {
 
   #[cfg(unix)]
   {
+    let _ = symlink_type; // unused on Unix
     std::os::unix::fs::symlink(target_path, path).map_err(|e| {
       if e.kind() == std::io::ErrorKind::NotFound {
         Error::from_reason(format!(
@@ -23,20 +27,21 @@ fn symlink_impl(target: String, path_str: String) -> Result<()> {
           target, path_str
         ))
       } else {
-        Error::from_reason(format!(
-          "{}, symlink '{}' -> '{}'",
-          e, target, path_str
-        ))
+        Error::from_reason(format!("{}, symlink '{}' -> '{}'", e, target, path_str))
       }
     })?;
   }
 
-  #[cfg(not(unix))]
+  #[cfg(windows)]
   {
-    if target_path.is_dir() {
-      std::os::windows::fs::symlink_dir(target_path, path)
-    } else {
-      std::os::windows::fs::symlink_file(target_path, path)
+    let ty = symlink_type.as_deref().unwrap_or("file");
+    match ty {
+      "junction" => {
+        // Junction only works for directories; use symlink_dir as fallback
+        std::os::windows::fs::symlink_dir(target_path, path)
+      }
+      "dir" => std::os::windows::fs::symlink_dir(target_path, path),
+      _ => std::os::windows::fs::symlink_file(target_path, path),
     }
     .map_err(|e| {
       if e.kind() == std::io::ErrorKind::NotFound {
@@ -45,10 +50,7 @@ fn symlink_impl(target: String, path_str: String) -> Result<()> {
           target, path_str
         ))
       } else {
-        Error::from_reason(format!(
-          "{}, symlink '{}' -> '{}'",
-          e, target, path_str
-        ))
+        Error::from_reason(format!("{}, symlink '{}' -> '{}'", e, target, path_str))
       }
     })?;
   }
@@ -57,8 +59,8 @@ fn symlink_impl(target: String, path_str: String) -> Result<()> {
 }
 
 #[napi(js_name = "symlinkSync")]
-pub fn symlink_sync(target: String, path: String) -> Result<()> {
-  symlink_impl(target, path)
+pub fn symlink_sync(target: String, path: String, symlink_type: Option<String>) -> Result<()> {
+  symlink_impl(target, path, symlink_type)
 }
 
 // ========= async version =========
@@ -66,6 +68,7 @@ pub fn symlink_sync(target: String, path: String) -> Result<()> {
 pub struct SymlinkTask {
   pub target: String,
   pub path: String,
+  pub symlink_type: Option<String>,
 }
 
 impl Task for SymlinkTask {
@@ -73,7 +76,7 @@ impl Task for SymlinkTask {
   type JsValue = ();
 
   fn compute(&mut self) -> Result<Self::Output> {
-    symlink_impl(self.target.clone(), self.path.clone())
+    symlink_impl(self.target.clone(), self.path.clone(), self.symlink_type.clone())
   }
 
   fn resolve(&mut self, _env: Env, _output: Self::Output) -> Result<Self::JsValue> {
@@ -82,6 +85,6 @@ impl Task for SymlinkTask {
 }
 
 #[napi(js_name = "symlink")]
-pub fn symlink(target: String, path: String) -> AsyncTask<SymlinkTask> {
-  AsyncTask::new(SymlinkTask { target, path })
+pub fn symlink(target: String, path: String, symlink_type: Option<String>) -> AsyncTask<SymlinkTask> {
+  AsyncTask::new(SymlinkTask { target, path, symlink_type })
 }

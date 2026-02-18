@@ -37,7 +37,7 @@ pnpm add hyper-fs
   ```ts
   path: string; // ✅
   options?: {
-    encoding?: string; // ❌
+    encoding?: string; // 🚧（默认 'utf8'；'buffer' 暂不支持）
     withFileTypes?: boolean; // ✅
     recursive?: boolean; // ✅
     concurrency?: number; // ✨
@@ -156,7 +156,11 @@ pnpm add hyper-fs
   ```ts
   path: string // ✅
   ```
-- **返回类型**：`Stats`（dev, mode, nlink, uid, gid, rdev, blksize, ino, size, blocks, atimeMs, mtimeMs, ctimeMs, birthtimeMs + isFile/isDirectory/isSymbolicLink/...）
+- **返回类型**：`Stats`
+  - 数值字段：`dev`, `mode`, `nlink`, `uid`, `gid`, `rdev`, `blksize`, `ino`, `size`, `blocks`, `atimeMs`, `mtimeMs`, `ctimeMs`, `birthtimeMs`
+  - **Date 字段**：`atime`, `mtime`, `ctime`, `birthtime` → `Date` 对象 ✅
+  - 方法：`isFile()`, `isDirectory()`, `isSymbolicLink()`, ...
+- **错误区分**：`ENOENT` vs `EACCES` ✅
 
 ### `lstat`
 
@@ -283,6 +287,7 @@ pnpm add hyper-fs
   ```ts
   target: string // ✅
   path: string // ✅
+  type?: 'file' | 'dir' | 'junction' // ✅（仅 Windows 有效，Unix 忽略）
   ```
 
 ### `link`
@@ -300,6 +305,7 @@ pnpm add hyper-fs
   prefix: string // ✅
   ```
 - **返回类型**：`string`
+- 使用系统随机源（Unix: `/dev/urandom`，Windows: `BCryptGenRandom`），最多重试 10 次 ✅
 
 ### `watch`
 

@@ -76,6 +76,7 @@ hyper-fs/
 │   ├── stat.rs             # stat / lstat
 │   ├── read_file.rs        # readFile / readFileSync
 │   ├── write_file.rs       # writeFile / appendFile
+│   ├── cp.rs               # cp / cpSync（递归复制，支持并发）
 │   └── ...                 # 每个 API 一个文件
 ├── __test__/               # 测试文件（TypeScript, AVA 框架）
 │   ├── readdir.spec.ts
@@ -91,7 +92,8 @@ hyper-fs/
 │   ├── copy_file.ts        # copyFile 性能对比
 │   ├── exists.ts           # exists / access 性能对比
 │   ├── mkdir.ts            # mkdir 性能对比
-│   └── rm.ts               # rm 性能对比（含并发）
+│   ├── rm.ts               # rm 性能对比（含并发）
+│   └── cp.ts               # cp 性能对比（含并发，树形/平铺目录）
 ├── reference/              # Node.js fs 模块源码参考
 │   ├── fs.js               # Node.js 主 fs 模块
 │   └── internal/fs/        # Node.js 内部实现

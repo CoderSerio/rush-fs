@@ -35,7 +35,7 @@ We are rewriting `fs` APIs one by one.
   ```ts
   path: string; // ✅
   options?: {
-    encoding?: string; // ❌
+    encoding?: string; // 🚧 ('utf8' default; 'buffer' not supported)
     withFileTypes?: boolean; // ✅
     recursive?: boolean; // ✅
     concurrency?: number; // ✨
@@ -154,7 +154,11 @@ We are rewriting `fs` APIs one by one.
   ```ts
   path: string // ✅
   ```
-- **Return Type**: `Stats` (dev, mode, nlink, uid, gid, rdev, blksize, ino, size, blocks, atimeMs, mtimeMs, ctimeMs, birthtimeMs + isFile/isDirectory/isSymbolicLink/...)
+- **Return Type**: `Stats`
+  - Numeric fields: `dev`, `mode`, `nlink`, `uid`, `gid`, `rdev`, `blksize`, `ino`, `size`, `blocks`, `atimeMs`, `mtimeMs`, `ctimeMs`, `birthtimeMs`
+  - **Date fields**: `atime`, `mtime`, `ctime`, `birthtime` → `Date` objects ✅
+  - Methods: `isFile()`, `isDirectory()`, `isSymbolicLink()`, ...
+- **Error distinction**: `ENOENT` vs `EACCES` ✅
 
 ### `lstat`
 
@@ -281,6 +285,7 @@ We are rewriting `fs` APIs one by one.
   ```ts
   target: string // ✅
   path: string // ✅
+  type?: 'file' | 'dir' | 'junction' // ✅ (Windows only, ignored on Unix)
   ```
 
 ### `link`
@@ -298,6 +303,7 @@ We are rewriting `fs` APIs one by one.
   prefix: string // ✅
   ```
 - **Return Type**: `string`
+- Uses OS-level random source (`/dev/urandom` on Unix, `BCryptGenRandom` on Windows) with up to 10 retries ✅
 
 ### `watch`
 
