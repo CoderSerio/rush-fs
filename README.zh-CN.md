@@ -59,7 +59,7 @@ pnpm add hyper-fs
   ```ts
   path: string; // ✅
   options?: {
-    encoding?: string; // ✅ (utf8)
+    encoding?: string; // ✅ (utf8, ascii, latin1, base64, base64url, hex)
     flag?: string; // ✅ (r, r+, w+, a+ 等)
   };
   ```
@@ -72,7 +72,7 @@ pnpm add hyper-fs
   path: string; // ✅
   data: string | Buffer; // ✅
   options?: {
-    encoding?: string; // ❌
+    encoding?: string; // ✅ (utf8, ascii, latin1, base64, base64url, hex)
     mode?: number; // ✅
     flag?: string; // ✅ (w, wx, a, ax)
   };
@@ -85,7 +85,7 @@ pnpm add hyper-fs
   path: string; // ✅
   data: string | Buffer; // ✅
   options?: {
-    encoding?: string; // ❌
+    encoding?: string; // ✅ (utf8, ascii, latin1, base64, base64url, hex)
     mode?: number; // ✅
     flag?: string; // ✅
   };
@@ -98,6 +98,23 @@ pnpm add hyper-fs
   src: string; // ✅
   dest: string; // ✅
   mode?: number; // ✅ (COPYFILE_EXCL)
+  ```
+
+### `cp`
+
+- **Node.js 参数**（Node 16.7+）：
+  ```ts
+  src: string; // ✅
+  dest: string; // ✅
+  options?: {
+    recursive?: boolean; // ✅
+    force?: boolean; // ✅（默认 true）
+    errorOnExist?: boolean; // ✅
+    preserveTimestamps?: boolean; // ✅
+    dereference?: boolean; // ✅
+    verbatimSymlinks?: boolean; // ✅
+    concurrency?: number; // ✨
+  };
   ```
 
 ### `mkdir`
@@ -119,8 +136,8 @@ pnpm add hyper-fs
   path: string; // ✅
   options?: {
     force?: boolean; // ✅
-    maxRetries?: number; // ❌
-    retryDelay?: number; // ❌
+    maxRetries?: number; // ✅
+    retryDelay?: number; // ✅（默认 100ms）
     recursive?: boolean; // ✅
     concurrency?: number; // ✨
   };
@@ -326,16 +343,18 @@ await rm('./temp', { recursive: true, force: true })
 
 这些场景中 Rust 的并行遍历和零拷贝 I/O 发挥了真正优势：
 
-| 场景                                        | Node.js | Hyper-FS | 加速比    |
-| ------------------------------------------- | ------- | -------- | --------- |
-| `readdir` 递归（node_modules，约 3 万条目） | 281 ms  | 23 ms    | **12x**   |
-| `glob` 递归（`**/*.rs`）                    | 25 ms   | 1.46 ms  | **17x**   |
-| `glob` 递归 vs fast-glob                    | 102 ms  | 1.46 ms  | **70x**   |
-| `copyFile` 4 MB                             | 4.67 ms | 0.09 ms  | **50x**   |
-| `readFile` 4 MB utf8                        | 1.86 ms | 0.92 ms  | **2x**    |
-| `readFile` 64 KB utf8                       | 42 µs   | 18 µs    | **2.4x**  |
-| `rm` 2000 个文件（4 线程）                  | 92 ms   | 53 ms    | **1.75x** |
-| `access` R_OK（目录）                       | 4.18 µs | 1.55 µs  | **2.7x**  |
+| 场景                                        | Node.js   | Hyper-FS | 加速比    |
+| ------------------------------------------- | --------- | -------- | --------- |
+| `readdir` 递归（node_modules，约 3 万条目） | 281 ms    | 23 ms    | **12x**   |
+| `glob` 递归（`**/*.rs`）                    | 25 ms     | 1.46 ms  | **17x**   |
+| `glob` 递归 vs fast-glob                    | 102 ms    | 1.46 ms  | **70x**   |
+| `copyFile` 4 MB                             | 4.67 ms   | 0.09 ms  | **50x**   |
+| `readFile` 4 MB utf8                        | 1.86 ms   | 0.92 ms  | **2x**    |
+| `readFile` 64 KB utf8                       | 42 µs     | 18 µs    | **2.4x**  |
+| `rm` 2000 个文件（4 线程）                  | 92 ms     | 53 ms    | **1.75x** |
+| `access` R_OK（目录）                       | 4.18 µs   | 1.55 µs  | **2.7x**  |
+| `cp` 500 文件平铺目录（4 线程）             | 86.45 ms  | 32.88 ms | **2.6x**  |
+| `cp` 树形目录 ~363 节点（4 线程）           | 108.73 ms | 46.88 ms | **2.3x**  |
 
 ### 与 Node.js 持平的场景
 
@@ -368,12 +387,23 @@ Hyper-FS 在文件系统遍历类操作中使用多线程并行：
 | `readdir`（递归） | [jwalk](https://github.com/Byron/jwalk)                                   | ✅                 | auto   |
 | `glob`            | [ignore](https://github.com/BurntSushi/ripgrep/tree/master/crates/ignore) | ✅                 | 4      |
 | `rm`（递归）      | [rayon](https://github.com/rayon-rs/rayon)                                | ✅                 | 1      |
+| `cp`（递归）      | [rayon](https://github.com/rayon-rs/rayon)                                | ✅                 | 1      |
 
 单文件操作（`stat`、`readFile`、`writeFile`、`chmod` 等）是原子系统调用，不适用并行化。
 
 ### 核心结论
 
-**Hyper-FS 在递归/批量文件系统操作上表现卓越**（readdir、glob、rm），Rust 的并行遍历器带来 10–70 倍加速。单文件操作与 Node.js 基本持平。napi 桥接带来固定约 0.3 µs 的每次调用开销，仅在亚微秒级操作（如 `existsSync`）中有感知。
+**Hyper-FS 在递归/批量文件系统操作上表现卓越**（readdir、glob、rm、cp），Rust 的并行遍历器带来 2–70 倍加速。单文件操作与 Node.js 基本持平。napi 桥接带来固定约 0.3 µs 的每次调用开销，仅在亚微秒级操作（如 `existsSync`）中有感知。
+
+**`cp` 基准详情**（Apple Silicon，release 构建）：
+
+| 场景                                  | Node.js   | Hyper-FS 1 线程 | Hyper-FS 4 线程 | Hyper-FS 8 线程 |
+| ------------------------------------- | --------- | --------------- | --------------- | --------------- |
+| 平铺目录（500 文件）                  | 86.45 ms  | 61.56 ms        | 32.88 ms        | 36.67 ms        |
+| 树形目录（宽度=4，深度=3，~84 节点）  | 23.80 ms  | 16.94 ms        | 10.62 ms        | 9.76 ms         |
+| 树形目录（宽度=3，深度=5，~363 节点） | 108.73 ms | 75.39 ms        | 46.88 ms        | 46.18 ms        |
+
+`cp` 的最优并发数在 Apple Silicon 上为 **4 线程**——超过后受 I/O 带宽限制，收益趋于平稳。
 
 ## 贡献
 

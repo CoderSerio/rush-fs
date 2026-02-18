@@ -5,6 +5,79 @@ use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::Path;
 
+fn encode_string(s: &str, encoding: Option<&str>) -> Result<Vec<u8>> {
+  match encoding {
+    None | Some("utf8" | "utf-8") => Ok(s.as_bytes().to_vec()),
+    Some("ascii") => Ok(s.bytes().map(|b| b & 0x7f).collect()),
+    Some("latin1" | "binary") => Ok(s.chars().map(|c| c as u8).collect()),
+    Some("base64") => base64_decode(s, false),
+    Some("base64url") => base64_decode(s, true),
+    Some("hex") => hex_decode(s),
+    Some(enc) => Err(Error::from_reason(format!("Unknown encoding: {}", enc))),
+  }
+}
+
+fn base64_decode(s: &str, url_safe: bool) -> Result<Vec<u8>> {
+  let mut buf = Vec::with_capacity(s.len() * 3 / 4);
+  let mut acc: u32 = 0;
+  let mut bits: u32 = 0;
+  for c in s.chars() {
+    let val = if url_safe {
+      match c {
+        'A'..='Z' => c as u32 - 'A' as u32,
+        'a'..='z' => c as u32 - 'a' as u32 + 26,
+        '0'..='9' => c as u32 - '0' as u32 + 52,
+        '-' => 62,
+        '_' => 63,
+        '=' => continue,
+        _ => continue,
+      }
+    } else {
+      match c {
+        'A'..='Z' => c as u32 - 'A' as u32,
+        'a'..='z' => c as u32 - 'a' as u32 + 26,
+        '0'..='9' => c as u32 - '0' as u32 + 52,
+        '+' => 62,
+        '/' => 63,
+        '=' => continue,
+        _ => continue,
+      }
+    };
+    acc = (acc << 6) | val;
+    bits += 6;
+    if bits >= 8 {
+      bits -= 8;
+      buf.push((acc >> bits) as u8);
+      acc &= (1 << bits) - 1;
+    }
+  }
+  Ok(buf)
+}
+
+fn hex_decode(s: &str) -> Result<Vec<u8>> {
+  let s = s.trim();
+  if s.len() % 2 != 0 {
+    return Err(Error::from_reason("Invalid hex string".to_string()));
+  }
+  let mut buf = Vec::with_capacity(s.len() / 2);
+  let bytes = s.as_bytes();
+  for i in (0..bytes.len()).step_by(2) {
+    let hi = hex_val(bytes[i])?;
+    let lo = hex_val(bytes[i + 1])?;
+    buf.push((hi << 4) | lo);
+  }
+  Ok(buf)
+}
+
+fn hex_val(b: u8) -> Result<u8> {
+  match b {
+    b'0'..=b'9' => Ok(b - b'0'),
+    b'a'..=b'f' => Ok(b - b'a' + 10),
+    b'A'..=b'F' => Ok(b - b'A' + 10),
+    _ => Err(Error::from_reason(format!("Invalid hex character: {}", b as char))),
+  }
+}
+
 #[napi(object)]
 #[derive(Clone)]
 pub struct WriteFileOptions {
@@ -22,8 +95,9 @@ fn write_file_impl(path_str: String, data: Either<String, Buffer>, options: Opti
   });
 
   let flag = opts.flag.as_deref().unwrap_or("w");
+  let encoding = opts.encoding.as_deref();
   let bytes: Vec<u8> = match &data {
-    Either::A(s) => s.as_bytes().to_vec(),
+    Either::A(s) => encode_string(s, encoding)?,
     Either::B(b) => b.to_vec(),
   };
 

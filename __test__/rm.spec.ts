@@ -249,3 +249,34 @@ test('dual-run: rmSync recursive should behave same as node:fs', (t) => {
 
   t.is(existsSync(hyperDir), existsSync(nodeDir))
 })
+
+// ===== maxRetries / retryDelay =====
+
+test('sync: maxRetries should eventually succeed on transient failure', (t) => {
+  const tempDir = createTempDir()
+  const testFile = join(tempDir, 'retry.txt')
+  writeFileSync(testFile, 'retry test')
+
+  rmSync(testFile, { maxRetries: 3, retryDelay: 10 })
+  t.false(existsSync(testFile))
+})
+
+test('sync: maxRetries with recursive should work', (t) => {
+  const tempDir = createTempDir()
+  const testDir = join(tempDir, 'retry-dir')
+  mkdirSync(testDir, { recursive: true })
+  writeFileSync(join(testDir, 'f.txt'), 'data')
+
+  rmSync(testDir, { recursive: true, maxRetries: 2, retryDelay: 50 })
+  t.false(existsSync(testDir))
+})
+
+test('async: maxRetries with recursive should work', async (t) => {
+  const tempDir = createTempDir()
+  const testDir = join(tempDir, 'retry-async')
+  mkdirSync(testDir, { recursive: true })
+  writeFileSync(join(testDir, 'f.txt'), 'data')
+
+  await rm(testDir, { recursive: true, maxRetries: 2, retryDelay: 50 })
+  t.false(existsSync(testDir))
+})

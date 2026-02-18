@@ -4,6 +4,67 @@ use napi_derive::napi;
 use std::fs;
 use std::path::Path;
 
+fn decode_data(data: Vec<u8>, encoding: Option<&str>) -> Result<Either<String, Buffer>> {
+  match encoding {
+    Some("utf8" | "utf-8") => {
+      let s = String::from_utf8(data)
+        .map_err(|e| Error::from_reason(format!("Invalid UTF-8: {}", e)))?;
+      Ok(Either::A(s))
+    }
+    Some("ascii") => {
+      let s: String = data.iter().map(|&b| (b & 0x7f) as char).collect();
+      Ok(Either::A(s))
+    }
+    Some("latin1" | "binary") => {
+      let s: String = data.iter().map(|&b| b as char).collect();
+      Ok(Either::A(s))
+    }
+    Some("base64") => {
+      Ok(Either::A(base64_encode(&data, false)))
+    }
+    Some("base64url") => {
+      Ok(Either::A(base64_encode(&data, true)))
+    }
+    Some("hex") => {
+      let s: String = data.iter().map(|b| format!("{:02x}", b)).collect();
+      Ok(Either::A(s))
+    }
+    Some(enc) => Err(Error::from_reason(format!(
+      "Unknown encoding: {}", enc
+    ))),
+    None => Ok(Either::B(Buffer::from(data))),
+  }
+}
+
+fn base64_encode(data: &[u8], url_safe: bool) -> String {
+  const STD: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const URL: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  let table = if url_safe { URL } else { STD };
+
+  let mut result = String::with_capacity((data.len() + 2) / 3 * 4);
+  let chunks = data.chunks(3);
+  for chunk in chunks {
+    let b0 = chunk[0] as u32;
+    let b1 = if chunk.len() > 1 { chunk[1] as u32 } else { 0 };
+    let b2 = if chunk.len() > 2 { chunk[2] as u32 } else { 0 };
+    let triple = (b0 << 16) | (b1 << 8) | b2;
+
+    result.push(table[((triple >> 18) & 0x3F) as usize] as char);
+    result.push(table[((triple >> 12) & 0x3F) as usize] as char);
+    if chunk.len() > 1 {
+      result.push(table[((triple >> 6) & 0x3F) as usize] as char);
+    } else if !url_safe {
+      result.push('=');
+    }
+    if chunk.len() > 2 {
+      result.push(table[(triple & 0x3F) as usize] as char);
+    } else if !url_safe {
+      result.push('=');
+    }
+  }
+  result
+}
+
 #[napi(object)]
 #[derive(Clone)]
 pub struct ReadFileOptions {
@@ -61,18 +122,7 @@ fn read_file_impl(
   let mut data = Vec::new();
   file.read_to_end(&mut data).map_err(|e| Error::from_reason(e.to_string()))?;
 
-  match opts.encoding.as_deref() {
-    Some("utf8" | "utf-8") => {
-      let s = String::from_utf8(data)
-        .map_err(|e| Error::from_reason(format!("Invalid UTF-8: {}", e)))?;
-      Ok(Either::A(s))
-    }
-    Some(enc) => Err(Error::from_reason(format!(
-      "Unknown encoding: {}",
-      enc
-    ))),
-    None => Ok(Either::B(Buffer::from(data))),
-  }
+  decode_data(data, opts.encoding.as_deref())
 }
 
 #[napi(js_name = "readFileSync")]

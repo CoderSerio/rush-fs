@@ -57,7 +57,7 @@ We are rewriting `fs` APIs one by one.
   ```ts
   path: string; // ✅
   options?: {
-    encoding?: string; // ✅ (utf8)
+    encoding?: string; // ✅ (utf8, ascii, latin1, base64, base64url, hex)
     flag?: string; // ✅ (r, r+, w+, a+, etc.)
   };
   ```
@@ -70,7 +70,7 @@ We are rewriting `fs` APIs one by one.
   path: string; // ✅
   data: string | Buffer; // ✅
   options?: {
-    encoding?: string; // ❌
+    encoding?: string; // ✅ (utf8, ascii, latin1, base64, base64url, hex)
     mode?: number; // ✅
     flag?: string; // ✅ (w, wx, a, ax)
   };
@@ -83,7 +83,7 @@ We are rewriting `fs` APIs one by one.
   path: string; // ✅
   data: string | Buffer; // ✅
   options?: {
-    encoding?: string; // ❌
+    encoding?: string; // ✅ (utf8, ascii, latin1, base64, base64url, hex)
     mode?: number; // ✅
     flag?: string; // ✅
   };
@@ -96,6 +96,23 @@ We are rewriting `fs` APIs one by one.
   src: string; // ✅
   dest: string; // ✅
   mode?: number; // ✅ (COPYFILE_EXCL)
+  ```
+
+### `cp`
+
+- **Node.js Arguments** (Node 16.7+):
+  ```ts
+  src: string; // ✅
+  dest: string; // ✅
+  options?: {
+    recursive?: boolean; // ✅
+    force?: boolean; // ✅ (default: true)
+    errorOnExist?: boolean; // ✅
+    preserveTimestamps?: boolean; // ✅
+    dereference?: boolean; // ✅
+    verbatimSymlinks?: boolean; // ✅
+    concurrency?: number; // ✨
+  };
   ```
 
 ### `mkdir`
@@ -117,9 +134,9 @@ We are rewriting `fs` APIs one by one.
   path: string; // ✅
   options?: {
     force?: boolean; // ✅
-    maxRetries?: number; // ❌
+    maxRetries?: number; // ✅
     recursive?: boolean; // ✅
-    retryDelay?: number; // ❌
+    retryDelay?: number; // ✅ (default: 100ms)
     concurrency?: number; // ✨
   };
   ```
@@ -324,16 +341,18 @@ await rm('./temp', { recursive: true, force: true })
 
 These are the scenarios where Rust's parallelism and zero-copy I/O make a real difference:
 
-| Scenario                                         | Node.js | Hyper-FS | Speedup   |
-| ------------------------------------------------ | ------- | -------- | --------- |
-| `readdir` recursive (node_modules, ~30k entries) | 281 ms  | 23 ms    | **12x**   |
-| `glob` recursive (`**/*.rs`)                     | 25 ms   | 1.46 ms  | **17x**   |
-| `glob` recursive vs fast-glob                    | 102 ms  | 1.46 ms  | **70x**   |
-| `copyFile` 4 MB                                  | 4.67 ms | 0.09 ms  | **50x**   |
-| `readFile` 4 MB utf8                             | 1.86 ms | 0.92 ms  | **2x**    |
-| `readFile` 64 KB utf8                            | 42 µs   | 18 µs    | **2.4x**  |
-| `rm` 2000 files (4 threads)                      | 92 ms   | 53 ms    | **1.75x** |
-| `access` R_OK (directory)                        | 4.18 µs | 1.55 µs  | **2.7x**  |
+| Scenario                                         | Node.js   | Hyper-FS | Speedup   |
+| ------------------------------------------------ | --------- | -------- | --------- |
+| `readdir` recursive (node_modules, ~30k entries) | 281 ms    | 23 ms    | **12x**   |
+| `glob` recursive (`**/*.rs`)                     | 25 ms     | 1.46 ms  | **17x**   |
+| `glob` recursive vs fast-glob                    | 102 ms    | 1.46 ms  | **70x**   |
+| `copyFile` 4 MB                                  | 4.67 ms   | 0.09 ms  | **50x**   |
+| `readFile` 4 MB utf8                             | 1.86 ms   | 0.92 ms  | **2x**    |
+| `readFile` 64 KB utf8                            | 42 µs     | 18 µs    | **2.4x**  |
+| `rm` 2000 files (4 threads)                      | 92 ms     | 53 ms    | **1.75x** |
+| `access` R_OK (directory)                        | 4.18 µs   | 1.55 µs  | **2.7x**  |
+| `cp` 500-file flat dir (4 threads)               | 86.45 ms  | 32.88 ms | **2.6x**  |
+| `cp` tree dir ~363 nodes (4 threads)             | 108.73 ms | 46.88 ms | **2.3x**  |
 
 ### On Par with Node.js
 
@@ -366,12 +385,23 @@ Hyper-FS uses multi-threaded parallelism for operations that traverse the filesy
 | `readdir` (recursive) | [jwalk](https://github.com/Byron/jwalk)                                   | ✅                   | auto    |
 | `glob`                | [ignore](https://github.com/BurntSushi/ripgrep/tree/master/crates/ignore) | ✅                   | 4       |
 | `rm` (recursive)      | [rayon](https://github.com/rayon-rs/rayon)                                | ✅                   | 1       |
+| `cp` (recursive)      | [rayon](https://github.com/rayon-rs/rayon)                                | ✅                   | 1       |
 
 Single-file operations (`stat`, `readFile`, `writeFile`, `chmod`, etc.) are atomic syscalls — parallelism does not apply.
 
 ### Key Takeaway
 
-**Hyper-FS excels at recursive / batch filesystem operations** (readdir, glob, rm) where Rust's parallel walkers deliver 10–70x speedups. For single-file operations it performs on par with Node.js. The napi bridge adds a fixed ~0.3 µs overhead per call, which only matters for sub-microsecond operations like `existsSync`.
+**Hyper-FS excels at recursive / batch filesystem operations** (readdir, glob, rm, cp) where Rust's parallel walkers deliver 2–70x speedups. For single-file operations it performs on par with Node.js. The napi bridge adds a fixed ~0.3 µs overhead per call, which only matters for sub-microsecond operations like `existsSync`.
+
+**`cp` benchmark detail** (Apple Silicon, release build):
+
+| Scenario                                  | Node.js   | Hyper-FS 1T | Hyper-FS 4T | Hyper-FS 8T |
+| ----------------------------------------- | --------- | ----------- | ----------- | ----------- |
+| Flat dir (500 files)                      | 86.45 ms  | 61.56 ms    | 32.88 ms    | 36.67 ms    |
+| Tree dir (breadth=4, depth=3, ~84 nodes)  | 23.80 ms  | 16.94 ms    | 10.62 ms    | 9.76 ms     |
+| Tree dir (breadth=3, depth=5, ~363 nodes) | 108.73 ms | 75.39 ms    | 46.88 ms    | 46.18 ms    |
+
+Optimal concurrency for `cp` is **4 threads** on Apple Silicon — beyond that, I/O bandwidth becomes the bottleneck and diminishing returns set in.
 
 ## Contributing
 

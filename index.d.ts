@@ -69,6 +69,24 @@ export declare function copyFile(src: string, dest: string, mode?: number | unde
 
 export declare function copyFileSync(src: string, dest: string, mode?: number | undefined | null): void
 
+export declare function cp(src: string, dest: string, options?: CpOptions | undefined | null): Promise<unknown>
+
+export interface CpOptions {
+  recursive?: boolean
+  force?: boolean
+  errorOnExist?: boolean
+  preserveTimestamps?: boolean
+  dereference?: boolean
+  verbatimSymlinks?: boolean
+  /**
+   * Hyper-FS extension: number of parallel threads for recursive copy.
+   * 0 or 1 means sequential; > 1 enables rayon parallel traversal.
+   */
+  concurrency?: number
+}
+
+export declare function cpSync(src: string, dest: string, options?: CpOptions | undefined | null): void
+
 export declare function exists(path: string): Promise<unknown>
 
 export declare function existsSync(path: string): boolean
