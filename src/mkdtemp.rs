@@ -24,6 +24,8 @@ fn generate_random_suffix() -> String {
   #[cfg(windows)]
   {
     // BCryptGenRandom via Windows CNG API
+    // Link against bcrypt.lib on MSVC to resolve BCryptGenRandom.
+    #[link(name = "bcrypt")]
     extern "system" {
       fn BCryptGenRandom(
         h_algorithm: *mut std::ffi::c_void,

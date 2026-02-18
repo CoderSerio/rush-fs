@@ -35,7 +35,7 @@ fn base64_encode(data: &[u8], url_safe: bool) -> String {
   const URL: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
   let table = if url_safe { URL } else { STD };
 
-  let mut result = String::with_capacity((data.len() + 2) / 3 * 4);
+  let mut result = String::with_capacity(data.len().div_ceil(3) * 4);
   let chunks = data.chunks(3);
   for chunk in chunks {
     let b0 = chunk[0] as u32;

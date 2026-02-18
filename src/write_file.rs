@@ -56,7 +56,7 @@ fn base64_decode(s: &str, url_safe: bool) -> Result<Vec<u8>> {
 
 fn hex_decode(s: &str) -> Result<Vec<u8>> {
   let s = s.trim();
-  if s.len() % 2 != 0 {
+  if !s.len().is_multiple_of(2) {
     return Err(Error::from_reason("Invalid hex string".to_string()));
   }
   let mut buf = Vec::with_capacity(s.len() / 2);
