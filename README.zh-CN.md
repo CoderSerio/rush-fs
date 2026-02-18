@@ -420,14 +420,34 @@ Rush-FS 在文件系统遍历类操作中使用多线程并行：
 
 ## 发布（维护者专用）
 
-`rush-fs` 会为每个平台发布一个预编译二进制（参见 `package.json` 中的 `optionalDependencies`）。要发布新版本，请依次执行：
+`rush-fs` 会为每个平台发布一个预编译二进制（参见 `package.json` 中的 `optionalDependencies`）。**若只有 Mac，无法本地构建 Windows/Linux 的 .node，请用下面的「通过 CI 发布」。**
+
+### 通过 GitHub Actions 发布（推荐）
+
+CI 已在多平台（macOS x64/arm64、Windows、Linux）构建并测试，通过后可由同一 workflow 发布到 npm。
+
+1. 在仓库 **Settings → Secrets and variables → Actions** 里添加 **NPM_TOKEN**（npm 账号生成的 Classic Token，需允许发布）。
+2. 确保 `package.json` 和 `Cargo.toml` 中版本号一致（如 `0.0.3`），且 `package.json` 里已包含四个 `optionalDependencies`（版本与主包一致）。
+3. 提交并推送到 `main`，**且该次提交的 commit message 仅为版本号**（如 `0.0.3`）。CI 跑通后会自动：先发布四个平台包，再发布主包 `rush-fs`。
+
+示例：
+
+```bash
+# 版本和 optionalDependencies 已改好后
+git add package.json Cargo.toml
+git commit -m "0.0.3"
+git push origin main
+```
+
+4. 发版完成后，若希望 CI 继续用 `pnpm install --frozen-lockfile`，可在仓库里删掉 `optionalDependencies` 再提交，下次发版前再加回。
+
+### 本地发布（需能构建各平台）
+
+若本机可构建所有平台（或只发当前平台），可按顺序执行：
 
 1. 确保已执行 `npm login`。
-2. 使用 `pnpm version <patch|minor|major>` 提升版本号（内部会运行 `pnpm preversion`，构建 release 产物）。
-3. 运行 `pnpm prepublishOnly`（即 `napi prepublish -t npm`）逐个发布 `rush-fs-<platform>` 可选依赖，例如 `rush-fs-darwin-arm64`、`rush-fs-win32-x64-msvc` 等。
-4. 最后执行 `pnpm publish --access public` 发布主包。`prepublishOnly` 会自动触发，但提前单独跑第 3 步可以先确认各平台包已成功发布。
-
-一旦某个平台包发布失败，修复问题后需重新执行 `pnpm prepublishOnly`，确保主包不会依赖缺失的可选依赖。
+2. 使用 `pnpm version <patch|minor|major>` 提升版本号（会执行 `pnpm preversion` 在 `npm/` 下构建）。
+3. 运行 `pnpm prepublishOnly` 发布各平台包，再执行 `pnpm publish --access public` 发布主包。
 
 ## 许可证
 

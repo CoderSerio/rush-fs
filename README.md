@@ -530,11 +530,11 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the complete development guide — 
 }
 ```
 
-Then publish both the platform-specific packages and the main package:
+Then publish both the platform-specific packages and the main package **in order**:
 
 1. Ensure you are logged in to npm (`npm login`).
-2. Bump the version via `pnpm version <patch|minor|major>` (this runs `pnpm preversion` to build the release binaries).
-3. Publish every optional dependency in `package.json` by running `pnpm prepublishOnly` (which executes `napi prepublish -t npm` and pushes `rush-fs-<platform>` packages such as `rush-fs-darwin-arm64`).
+2. Bump the version via `pnpm version <patch|minor|major>`. This runs `pnpm preversion`, which builds the `.node` artifacts under `npm/` for each platform. **These files must exist before the next step can publish them.**
+3. Run `pnpm prepublishOnly` (which runs `napi prepublish -t npm`) to publish each built package from `npm/` (e.g. `rush-fs-darwin-arm64`, `rush-fs-win32-x64-msvc`). **If you see "doesn't exist" here, you skipped the build—run `pnpm build` or complete step 2 first.**
 4. Publish the main package with `pnpm publish --access public`. The `prepublishOnly` hook runs automatically, but running step 3 manually lets you verify each platform succeeded before tagging the main release.
 
 If any platform publish fails, fix it and re-run `pnpm prepublishOnly` before retrying `pnpm publish` so consumers never receive a release referring to missing optional dependencies.
