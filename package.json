@@ -113,11 +113,5 @@
     "singleQuote": true,
     "arrowParens": "always"
   },
-  "packageManager": "pnpm@9.15.4",
-  "optionalDependencies": {
-    "rush-fs-win32-x64-msvc": "0.0.2",
-    "rush-fs-darwin-x64": "0.0.2",
-    "rush-fs-linux-x64-gnu": "0.0.2",
-    "rush-fs-darwin-arm64": "0.0.2"
-  }
+  "packageManager": "pnpm@9.15.4"
 }

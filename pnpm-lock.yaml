@@ -61,19 +61,6 @@ importers:
       typescript:
         specifier: ^5.9.2
         version: 5.9.3
-    optionalDependencies:
-      rush-fs-darwin-arm64:
-        specifier: 0.0.2
-        version: 0.0.2
-      rush-fs-darwin-x64:
-        specifier: 0.0.2
-        version: 0.0.2
-      rush-fs-linux-x64-gnu:
-        specifier: 0.0.2
-        version: 0.0.2
-      rush-fs-win32-x64-msvc:
-        specifier: 0.0.2
-        version: 0.0.2
 
 packages:
   '@emnapi/core@1.8.1':

@@ -519,7 +519,18 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the complete development guide — 
 
 ## Publishing (Maintainers Only)
 
-`rush-fs` ships prebuilt native binaries per platform (see `optionalDependencies` in `package.json`). When cutting a release you must publish both the platform-specific packages and the main package:
+`rush-fs` ships prebuilt native binaries per platform. In this repo, `optionalDependencies` are omitted so CI can use `pnpm install --frozen-lockfile` (the platform packages are not published until release). **Before publishing**, add them back to `package.json` with the same version as the main package, for example:
+
+```json
+"optionalDependencies": {
+  "rush-fs-win32-x64-msvc": "<version>",
+  "rush-fs-darwin-x64": "<version>",
+  "rush-fs-linux-x64-gnu": "<version>",
+  "rush-fs-darwin-arm64": "<version>"
+}
+```
+
+Then publish both the platform-specific packages and the main package:
 
 1. Ensure you are logged in to npm (`npm login`).
 2. Bump the version via `pnpm version <patch|minor|major>` (this runs `pnpm preversion` to build the release binaries).
