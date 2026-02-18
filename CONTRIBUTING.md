@@ -85,7 +85,13 @@ hyper-fs/
 │   ├── bench.ts            # 基准测试入口（自动发现并运行）
 │   ├── readdir.ts          # readdir 性能对比
 │   ├── glob.ts             # glob 性能对比
-│   └── rm.ts               # rm 性能对比
+│   ├── stat.ts             # stat / lstat 性能对比
+│   ├── read_file.ts        # readFile 性能对比（多种文件大小）
+│   ├── write_file.ts       # writeFile / appendFile 性能对比
+│   ├── copy_file.ts        # copyFile 性能对比
+│   ├── exists.ts           # exists / access 性能对比
+│   ├── mkdir.ts            # mkdir 性能对比
+│   └── rm.ts               # rm 性能对比（含并发）
 ├── reference/              # Node.js fs 模块源码参考
 │   ├── fs.js               # Node.js 主 fs 模块
 │   └── internal/fs/        # Node.js 内部实现
@@ -370,13 +376,29 @@ npx ava __test__/stat.spec.ts  # 只运行 stat 的测试
 
 ### 基准测试结构
 
-基准测试位于 `benchmark/` 目录，使用 [mitata](https://github.com/evanwashere/mitata) 库。
+基准测试位于 `benchmark/` 目录。纯读操作（stat、readFile、exists 等）使用 [mitata](https://github.com/evanwashere/mitata) 库获得精确的微基准数据；破坏性/有副作用的操作（writeFile、copyFile、mkdir、rm）使用手动迭代 + `process.hrtime` 测量，每次迭代前重新搭建测试数据。
+
+### 已有的基准测试
+
+| 文件            | 覆盖 API                                                   | 模式     |
+| --------------- | ---------------------------------------------------------- | -------- |
+| `readdir.ts`    | readdir（names / withFileTypes / recursive / concurrency） | mitata   |
+| `glob.ts`       | glob vs node-glob vs fast-glob                             | mitata   |
+| `stat.ts`       | stat / lstat / batch stat                                  | mitata   |
+| `read_file.ts`  | readFile（11B / 64KB / 4MB, Buffer / utf8）                | mitata   |
+| `exists.ts`     | exists / access / batch exists                             | mitata   |
+| `write_file.ts` | writeFile / appendFile（多种大小）                         | 手动迭代 |
+| `copy_file.ts`  | copyFile（11B / 64KB / 4MB）                               | 手动迭代 |
+| `mkdir.ts`      | mkdir（单层 / recursive / 已存在）                         | 手动迭代 |
+| `rm.ts`         | rm（flat / deep / tree + concurrency）                     | 手动迭代 |
 
 ### 运行方式
 
 ```bash
 pnpm bench              # 运行所有基准测试
 pnpm bench readdir      # 只运行包含 "readdir" 的基准
+pnpm bench stat         # 只运行 stat 基准
+pnpm bench read_file    # 只运行 readFile 基准
 pnpm bench glob         # 只运行 glob 基准
 ```
 
