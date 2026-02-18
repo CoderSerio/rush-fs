@@ -1,0 +1,43 @@
+import test from 'ava'
+import { mkdtempSync, mkdtemp } from '../index.js'
+import { existsSync, mkdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
+
+const prefix = join(tmpdir(), 'hyper-fs-test-mkdtemp-')
+
+// ===== sync =====
+
+test('mkdtempSync: should create a temp directory and return its path', (t) => {
+  const dir = mkdtempSync(prefix)
+  t.true(typeof dir === 'string')
+  t.true(dir.startsWith(prefix))
+  t.true(existsSync(dir))
+})
+
+test('mkdtempSync: should create unique directories on each call', (t) => {
+  const dir1 = mkdtempSync(prefix)
+  const dir2 = mkdtempSync(prefix)
+  t.not(dir1, dir2)
+  t.true(existsSync(dir1))
+  t.true(existsSync(dir2))
+})
+
+test('mkdtempSync: should throw ENOENT for non-existent parent', (t) => {
+  t.throws(() => mkdtempSync('/tmp/no-such-parent-dir-999/prefix-'), { message: /ENOENT/ })
+})
+
+// ===== async =====
+
+test('mkdtemp: async should create a temp directory', async (t) => {
+  const dir = await mkdtemp(prefix)
+  t.true(typeof dir === 'string')
+  t.true(dir.startsWith(prefix))
+  t.true(existsSync(dir))
+})
+
+test('mkdtemp: async should throw ENOENT for non-existent parent', async (t) => {
+  await t.throwsAsync(async () => await mkdtemp('/tmp/no-such-parent-dir-999/prefix-'), {
+    message: /ENOENT/,
+  })
+})

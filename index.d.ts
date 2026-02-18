@@ -88,6 +88,10 @@ export declare function globSync(
   options?: GlobOptions | undefined | null,
 ): Array<string> | Array<Dirent>
 
+export declare function link(existingPath: string, newPath: string): Promise<unknown>
+
+export declare function linkSync(existingPath: string, newPath: string): void
+
 export declare function lstat(path: string): Promise<unknown>
 
 export declare function lstatSync(path: string): Stats
@@ -100,6 +104,10 @@ export interface MkdirOptions {
 }
 
 export declare function mkdirSync(path: string, options?: MkdirOptions | undefined | null): string | null
+
+export declare function mkdtemp(prefix: string): Promise<unknown>
+
+export declare function mkdtempSync(prefix: string): string
 
 export declare function readdir(path: string, options?: ReaddirOptions | undefined | null): Promise<unknown>
 
@@ -180,6 +188,10 @@ export declare function rmSync(path: string, options?: RmOptions | undefined | n
 export declare function stat(path: string): Promise<unknown>
 
 export declare function statSync(path: string): Stats
+
+export declare function symlink(target: string, path: string): Promise<unknown>
+
+export declare function symlinkSync(target: string, path: string): void
 
 export declare function truncate(path: string, len?: number | undefined | null): Promise<unknown>
 
