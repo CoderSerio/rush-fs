@@ -3,6 +3,7 @@ use napi::bindgen_prelude::*;
 use napi::Task;
 use napi_derive::napi;
 use std::fs;
+use std::io::ErrorKind;
 use std::path::Path;
 
 #[cfg(unix)]
@@ -89,25 +90,66 @@ fn metadata_to_stats(meta: &fs::Metadata) -> Stats {
 
 fn stat_impl(path_str: String, follow_symlinks: bool) -> Result<Stats> {
   let path = Path::new(&path_str);
-  let meta = if follow_symlinks {
+  let meta_result = if follow_symlinks {
     fs::metadata(path)
   } else {
     fs::symlink_metadata(path)
   };
-  let meta = meta.map_err(|e| {
-    if e.kind() == std::io::ErrorKind::PermissionDenied {
-      Error::from_reason(format!(
-        "EACCES: permission denied, stat '{}'",
-        path.to_string_lossy()
-      ))
-    } else {
-      Error::from_reason(format!(
-        "ENOENT: no such file or directory, stat '{}'",
-        path.to_string_lossy()
-      ))
+
+  let meta = match meta_result {
+    Ok(meta) => meta,
+    Err(err) => {
+      #[cfg(windows)]
+      {
+        if follow_symlinks && err.kind() == ErrorKind::PermissionDenied {
+          if let Some(target_meta) = follow_windows_symlink_target(path) {
+            target_meta
+          } else {
+            return Err(stat_error(path, err));
+          }
+        } else {
+          return Err(stat_error(path, err));
+        }
+      }
+      #[cfg(not(windows))]
+      {
+        return Err(stat_error(path, err));
+      }
     }
-  })?;
+  };
+
   Ok(metadata_to_stats(&meta))
+}
+
+fn stat_error(path: &Path, err: std::io::Error) -> Error {
+  if err.kind() == ErrorKind::PermissionDenied {
+    Error::from_reason(format!(
+      "EACCES: permission denied, stat '{}'",
+      path.to_string_lossy()
+    ))
+  } else {
+    Error::from_reason(format!(
+      "ENOENT: no such file or directory, stat '{}'",
+      path.to_string_lossy()
+    ))
+  }
+}
+
+#[cfg(windows)]
+fn follow_windows_symlink_target(path: &Path) -> Option<fs::Metadata> {
+  let link_meta = fs::symlink_metadata(path).ok()?;
+  if !link_meta.file_type().is_symlink() {
+    return None;
+  }
+
+  let target = fs::read_link(path).ok()?;
+  let resolved = if target.is_absolute() {
+    target
+  } else {
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    parent.join(target)
+  };
+  fs::metadata(&resolved).ok()
 }
 
 #[napi(js_name = "statSync")]

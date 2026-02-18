@@ -102,7 +102,7 @@ test('async: should return empty array for no matches', async (t) => {
 test('async: recursive match', async (t) => {
   const files = await glob('**/*.rs', { cwd: CWD })
   t.true(files.length > 0)
-  t.true(files.some((f) => f.includes('src/lib.rs')))
+  t.true(files.some((f) => f.replace(/\\/g, '/').includes('src/lib.rs')))
 })
 
 // ===== 目录匹配行为（对齐 Node.js fs.globSync）=====

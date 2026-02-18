@@ -42,6 +42,31 @@ test('mkdirSync: recursive should not throw if dir already exists', (t) => {
   rmdirSync(dir)
 })
 
+test('mkdirSync: recursive should throw EEXIST when target is a file', (t) => {
+  const dir = tmpPath('recursive-file-exists')
+  const file = join(dir, 'file.txt')
+  mkdirSync(dir)
+  nodeFs.writeFileSync(file, 'x')
+
+  const err = t.throws(() => mkdirSync(file, { recursive: true }), { message: /EEXIST/ })
+  t.true((err?.message ?? '').includes(file))
+
+  nodeFs.rmSync(dir, { recursive: true, force: true })
+})
+
+test('mkdirSync: recursive should throw ENOTDIR when ancestor is a file', (t) => {
+  const dir = tmpPath('recursive-not-dir')
+  const file = join(dir, 'file.txt')
+  const nested = join(file, 'child')
+  mkdirSync(dir)
+  nodeFs.writeFileSync(file, 'x')
+
+  const err = t.throws(() => mkdirSync(nested, { recursive: true }), { message: /ENOTDIR/ })
+  t.true((err?.message ?? '').includes(nested))
+
+  nodeFs.rmSync(dir, { recursive: true, force: true })
+})
+
 test('mkdir: async should create a directory', async (t) => {
   const dir = tmpPath('async')
   await mkdir(dir)

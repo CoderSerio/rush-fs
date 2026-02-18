@@ -12,6 +12,13 @@ function tmpFile(name: string): string {
   return file
 }
 
+function tmpDirPath(name: string): string {
+  const dir = join(tmpdir(), `hyper-fs-test-utimes-${Date.now()}-${Math.random().toString(36).slice(2)}`)
+  const target = join(dir, name)
+  mkdirSync(target, { recursive: true })
+  return target
+}
+
 test('utimesSync: should update atime and mtime', (t) => {
   const file = tmpFile('utimes.txt')
   const atime = 1000
@@ -19,6 +26,18 @@ test('utimesSync: should update atime and mtime', (t) => {
 
   utimesSync(file, atime, mtime)
   const s = statSync(file)
+
+  t.is(Math.floor(s.atimeMs / 1000), atime)
+  t.is(Math.floor(s.mtimeMs / 1000), mtime)
+})
+
+test('utimesSync: should update directory timestamps', (t) => {
+  const dir = tmpDirPath('utimes-dir')
+  const atime = 1234
+  const mtime = 2345
+
+  utimesSync(dir, atime, mtime)
+  const s = statSync(dir)
 
   t.is(Math.floor(s.atimeMs / 1000), atime)
   t.is(Math.floor(s.mtimeMs / 1000), mtime)

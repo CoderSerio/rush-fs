@@ -65,44 +65,44 @@ fn utimes_impl(path_str: String, atime: f64, mtime: f64) -> Result<()> {
 
     use windows_sys::Win32::Foundation::{CloseHandle, FILETIME, HANDLE, INVALID_HANDLE_VALUE};
     use windows_sys::Win32::Storage::FileSystem::{
-      CreateFileW, SetFileTime, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, OPEN_EXISTING,
+      CreateFileW, SetFileTime, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_BACKUP_SEMANTICS,
+      FILE_SHARE_DELETE, FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_WRITE_ATTRIBUTES, OPEN_EXISTING,
     };
 
     fn secs_to_filetime(time_secs: f64) -> FILETIME {
-      // Convert Unix epoch seconds to Windows FILETIME (100ns ticks since 1601-01-01).
+      // FILETIME is 100ns ticks since 1601-01-01 UTC.
       const EPOCH_DIFF_SECS: f64 = 11_644_473_600.0;
       let windows_secs = time_secs + EPOCH_DIFF_SECS;
       let ticks_100ns = (windows_secs * 10_000_000.0).round() as i128;
-      let lo = (ticks_100ns & 0xFFFF_FFFF) as u32;
-      let hi = ((ticks_100ns >> 32) & 0xFFFF_FFFF) as u32;
       FILETIME {
-        dwLowDateTime: lo,
-        dwHighDateTime: hi,
+        dwLowDateTime: (ticks_100ns & 0xFFFF_FFFF) as u32,
+        dwHighDateTime: ((ticks_100ns >> 32) & 0xFFFF_FFFF) as u32,
       }
     }
 
-    let atime_ft = secs_to_filetime(atime);
-    let mtime_ft = secs_to_filetime(mtime);
+    let mut flags = FILE_ATTRIBUTE_NORMAL;
+    if path.is_dir() {
+      // Directories require FILE_FLAG_BACKUP_SEMANTICS.
+      flags |= FILE_FLAG_BACKUP_SEMANTICS;
+    }
 
-    // SetFileTime requires a handle opened with FILE_WRITE_ATTRIBUTES (std OpenOptions::write doesn't).
     let wide: Vec<u16> = path
       .as_os_str()
       .encode_wide()
       .chain(std::iter::once(0))
       .collect();
-    // SetFileTime requires handle opened with FILE_WRITE_ATTRIBUTES (0x80).
-    let h = unsafe {
+    let handle: HANDLE = unsafe {
       CreateFileW(
         wide.as_ptr(),
-        0x80, // FILE_WRITE_ATTRIBUTES
-        FILE_SHARE_READ.0,
+        FILE_WRITE_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         std::ptr::null(),
-        OPEN_EXISTING.0,
-        FILE_ATTRIBUTE_NORMAL,
-        std::ptr::null_mut::<HANDLE>(),
+        OPEN_EXISTING,
+        flags,
+        std::ptr::null_mut(),
       )
     };
-    if h == INVALID_HANDLE_VALUE {
+    if handle == INVALID_HANDLE_VALUE {
       let e = std::io::Error::last_os_error();
       return Err(Error::from_reason(format!(
         "{}, utimes '{}'",
@@ -110,15 +110,20 @@ fn utimes_impl(path_str: String, atime: f64, mtime: f64) -> Result<()> {
         path.to_string_lossy()
       )));
     }
+
+    let atime_ft = secs_to_filetime(atime);
+    let mtime_ft = secs_to_filetime(mtime);
     let ok = unsafe {
       SetFileTime(
-        h,
+        handle,
         std::ptr::null(),
         &atime_ft as *const FILETIME,
         &mtime_ft as *const FILETIME,
       )
     };
-    unsafe { CloseHandle(h) };
+    unsafe {
+      CloseHandle(handle);
+    }
     if ok == 0 {
       let e = std::io::Error::last_os_error();
       return Err(Error::from_reason(format!(

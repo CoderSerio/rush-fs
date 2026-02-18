@@ -31,25 +31,7 @@ fn realpath_impl(path_str: String) -> Result<String> {
 
   #[cfg(windows)]
   {
-    use std::ffi::OsString;
-    use std::os::windows::ffi::OsStrExt;
-    use std::os::windows::ffi::OsStringExt;
-    use windows_sys::Win32::Storage::FileSystem::GetShortPathNameW;
-
-    let wide: Vec<u16> = resolved
-      .as_os_str()
-      .encode_wide()
-      .chain(std::iter::once(0))
-      .collect();
-    let mut buf: Vec<u16> = vec![0; 32768];
-    let len = unsafe { GetShortPathNameW(wide.as_ptr(), buf.as_mut_ptr(), buf.len() as u32) };
-    if len > 0 && (len as usize) < buf.len() {
-      buf.truncate(len as usize);
-      let short = OsString::from_wide(&buf);
-      let s = short.to_string_lossy().to_string();
-      return Ok(strip_verbatim_prefix(s));
-    }
-
+    // Return long path (strip \\?\) to match node:fs; do not use GetShortPathNameW (8.3) so tests match.
     let s = resolved.to_string_lossy().to_string();
     return Ok(strip_verbatim_prefix(s));
   }
