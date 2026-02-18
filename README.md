@@ -72,6 +72,58 @@ graph TD
     J -->|Return| K["JS Result"]
 ```
 
+## How does it works
+
+For the original Node.js, it works serially and cost lots of memory to parse os object and string into JS style: 
+
+```mermaid
+graph TD
+    A["JS: readdir"] -->|Call| B("Node.js C++ Binding")
+    B -->|Submit Task| C{"Libuv Thread Pool"}
+    
+    subgraph "Native Layer (Serial)"
+    C -->|"Syscall: getdents"| D[OS Kernel]
+    D -->|"Return File List"| C
+    C -->|"Process Paths"| C
+    end
+    
+    C -->|"Results Ready"| E("V8 Main Thread")
+    
+    subgraph "V8 Interaction (Heavy)"
+    E -->|"Create JS String 1"| F[V8 Heap]
+    E -->|"String 2"| F
+    E -->|"String N..."| F
+    F -->|"GC Pressure Rising"| F
+    end
+    
+    E -->|"Return Array"| G["JS Callback/Promise"]
+```
+
+But, it's saved with Rust now:
+
+```mermaid
+graph TD
+    A["JS: readdir"] -->|"N-API Call"| B("Rust Wrapper")
+    B -->|"Spawn Thread/Task"| C{"Rust Thread Pool"}
+    
+    subgraph "Rust 'Black Box'"
+    C -->|"Rayon: Parallel work"| D[OS Kernel]
+    D -->|"Syscall: getdents"| C
+    C -->|"Store as Rust Vec<String>"| H[Rust Heap]
+    H -->|"No V8 Interaction yet"| H
+    end
+    
+    C -->|"All Done"| I("Convert to JS")
+    
+    subgraph "N-API Bridge"
+    I -->|"Batch Create JS Array"| J[V8 Heap]
+    end
+    
+    J -->|Return| K["JS Result"]
+```
+
+
+
 ## Status & Roadmap
 
 We are rewriting `fs` APIs one by one.
