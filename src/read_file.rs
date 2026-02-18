@@ -21,7 +21,22 @@ fn read_file_impl(
     flag: None,
   });
 
-  let data = fs::read(path).map_err(|e| {
+  let flag = opts.flag.as_deref().unwrap_or("r");
+
+  let mut open_opts = fs::OpenOptions::new();
+  match flag {
+    "r" => { open_opts.read(true); }
+    "rs" | "sr" => { open_opts.read(true); }
+    "r+" => { open_opts.read(true).write(true); }
+    "rs+" | "sr+" => { open_opts.read(true).write(true); }
+    "a+" => { open_opts.read(true).append(true).create(true); }
+    "ax+" | "xa+" => { open_opts.read(true).append(true).create_new(true); }
+    "w+" => { open_opts.read(true).write(true).create(true).truncate(true); }
+    "wx+" | "xw+" => { open_opts.read(true).write(true).create_new(true); }
+    _ => { open_opts.read(true); }
+  }
+
+  let mut file = open_opts.open(path).map_err(|e| {
     if e.kind() == std::io::ErrorKind::NotFound {
       Error::from_reason(format!(
         "ENOENT: no such file or directory, open '{}'",
@@ -32,10 +47,19 @@ fn read_file_impl(
         "EACCES: permission denied, open '{}'",
         path.to_string_lossy()
       ))
+    } else if e.kind() == std::io::ErrorKind::AlreadyExists {
+      Error::from_reason(format!(
+        "EEXIST: file already exists, open '{}'",
+        path.to_string_lossy()
+      ))
     } else {
       Error::from_reason(e.to_string())
     }
   })?;
+
+  use std::io::Read;
+  let mut data = Vec::new();
+  file.read_to_end(&mut data).map_err(|e| Error::from_reason(e.to_string()))?;
 
   match opts.encoding.as_deref() {
     Some("utf8" | "utf-8") => {
