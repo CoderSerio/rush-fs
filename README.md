@@ -72,56 +72,6 @@ graph TD
     J -->|Return| K["JS Result"]
 ```
 
-## How does it works
-
-For the original Node.js, it works serially and cost lots of memory to parse os object and string into JS style:
-
-```mermaid
-graph TD
-    A["JS: readdir"] -->|Call| B("Node.js C++ Binding")
-    B -->|Submit Task| C{"Libuv Thread Pool"}
-
-    subgraph "Native Layer (Serial)"
-    C -->|"Syscall: getdents"| D[OS Kernel]
-    D -->|"Return File List"| C
-    C -->|"Process Paths"| C
-    end
-
-    C -->|"Results Ready"| E("V8 Main Thread")
-
-    subgraph "V8 Interaction (Heavy)"
-    E -->|"Create JS String 1"| F[V8 Heap]
-    E -->|"String 2"| F
-    E -->|"String N..."| F
-    F -->|"GC Pressure Rising"| F
-    end
-
-    E -->|"Return Array"| G["JS Callback/Promise"]
-```
-
-But, it's saved with Rust now:
-
-```mermaid
-graph TD
-    A["JS: readdir"] -->|"N-API Call"| B("Rust Wrapper")
-    B -->|"Spawn Thread/Task"| C{"Rust Thread Pool"}
-
-    subgraph "Rust 'Black Box'"
-    C -->|"Rayon: Parallel work"| D[OS Kernel]
-    D -->|"Syscall: getdents"| C
-    C -->|"Store as Rust Vec<String>"| H[Rust Heap]
-    H -->|"No V8 Interaction yet"| H
-    end
-
-    C -->|"All Done"| I("Convert to JS")
-
-    subgraph "N-API Bridge"
-    I -->|"Batch Create JS Array"| J[V8 Heap]
-    end
-
-    J -->|Return| K["JS Result"]
-```
-
 ## Status & Roadmap
 
 We are rewriting `fs` APIs one by one.
@@ -533,11 +483,29 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the complete development guide — 
 Then publish both the platform-specific packages and the main package **in order**:
 
 1. Ensure you are logged in to npm (`npm login`).
-2. Bump the version via `pnpm version <patch|minor|major>`. This runs `pnpm preversion`, which builds the `.node` artifacts under `npm/` for each platform. **These files must exist before the next step can publish them.**
-3. Run `pnpm prepublishOnly` (which runs `napi prepublish -t npm`) to publish each built package from `npm/` (e.g. `rush-fs-darwin-arm64`, `rush-fs-win32-x64-msvc`). **If you see "doesn't exist" here, you skipped the build—run `pnpm build` or complete step 2 first.**
+2. Bump the version via `pnpm version <patch|minor|major>`. This runs `pnpm preversion`, which builds the `.node` for the **current platform only** (output is in the crate root, not under `npm/`). **To verify the Mac build:** after `pnpm build` or `preversion`, check that the crate root contains `rush-fs.darwin-arm64.node` (Apple Silicon) or `rush-fs.darwin-x64.node` (Intel Mac). For `prepublishOnly` to see it, you must have the file under `npm/<platform>/` (see "Local single-platform publish" below).
+3. Run `pnpm prepublishOnly` (which runs `napi prepublish -t npm`) to publish each built package from `npm/` (e.g. `rush-fs-darwin-arm64`, `rush-fs-win32-x64-msvc`). **If you see "doesn't exist" here,** the `.node` is not in `npm/` yet—either use CI to build all platforms, or for local Mac-only: run `napi create-npm-dirs`, then copy `rush-fs.darwin-arm64.node` (or `darwin-x64`) into `npm/darwin-arm64/` (or `npm/darwin-x64/`), then run `pnpm prepublishOnly` again.
 4. Publish the main package with `pnpm publish --access public`. The `prepublishOnly` hook runs automatically, but running step 3 manually lets you verify each platform succeeded before tagging the main release.
 
 If any platform publish fails, fix it and re-run `pnpm prepublishOnly` before retrying `pnpm publish` so consumers never receive a release referring to missing optional dependencies.
+
+### How to verify the Mac build (方式 B 第 2 步后)
+
+- **Apple Silicon (M1/M2/M3):** in the repo root, a file named `rush-fs.darwin-arm64.node` must exist.
+- **Intel Mac:** in the repo root, a file named `rush-fs.darwin-x64.node` must exist.
+
+Command to check: `ls -la rush-fs.darwin-*.node` in the package directory. If you see the file, the Mac native build succeeded.
+
+### Local single-platform publish (Mac only)
+
+If you are not using CI and only have a Mac build:
+
+1. `pnpm build` (or `pnpm version patch` to also bump version).
+2. `napi create-npm-dirs` to create `npm/darwin-arm64/` (and other platform dirs).
+3. Copy the built `.node` into the matching npm dir, e.g.  
+   `cp rush-fs.darwin-arm64.node npm/darwin-arm64/`
+4. `pnpm prepublishOnly` — only the Mac platform package will be published; others will show "doesn't exist" (expected).
+5. `pnpm publish --access public`. Users on other platforms will need to build from source or you publish those platform packages later via CI.
 
 ## License
 
