@@ -133,18 +133,37 @@ jobs:
           const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           const v = p.version;
           p.optionalDependencies = {
-            'rush-fs-win32-x64-msvc': v,
-            'rush-fs-darwin-x64': v,
-            'rush-fs-linux-x64-gnu': v,
-            'rush-fs-darwin-arm64': v
+            '@rush-fs/rush-fs-win32-x64-msvc': v,
+            '@rush-fs/rush-fs-darwin-x64': v,
+            '@rush-fs/rush-fs-linux-x64-gnu': v,
+            '@rush-fs/rush-fs-darwin-arm64': v
           };
           fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
           "
+      - name: Update platform package names to use scope (@rush-fs/xxx)
+        run: |
+          for dir in npm/*/; do
+            if [ -f "$dir/package.json" ]; then
+              PKG_PATH="$dir/package.json"
+              export PKG_PATH
+              node -e "
+                const fs = require('fs');
+                const pkgPath = process.env.PKG_PATH;
+                const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+                console.log('Updating package name from', pkg.name, 'to @rush-fs/' + pkg.name);
+                if (!pkg.name.startsWith('@rush-fs/')) {
+                  pkg.name = '@rush-fs/' + pkg.name;
+                  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+                }
+              "
+            fi
+          done
       - name: Publish to npm
         run: |
           npm config set provenance true
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          # 读取 package.json 版本号，检查对应的 tag 是否已存在
+          # 先 fetch tags，然后检查对应的 tag 是否已存在
+          git fetch --tags --force
           VERSION=$(node -p "require('./package.json').version")
           TAG="v$VERSION"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
@@ -154,6 +173,26 @@ jobs:
             echo "Tag $TAG does not exist, will create GitHub Release"
             pnpm prepublishOnly
           fi
+          # prepublish 之后再次更新包名（因为 prepublish 可能会更新 package.json）
+          for dir in npm/*/; do
+            if [ -f "$dir/package.json" ]; then
+              PKG_PATH="$dir/package.json"
+              export PKG_PATH
+              node -e "
+                const fs = require('fs');
+                const pkgPath = process.env.PKG_PATH;
+                const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+                if (!pkg.name.startsWith('@rush-fs/')) {
+                  console.log('Fixing package name:', pkg.name, '-> @rush-fs/' + pkg.name);
+                  pkg.name = '@rush-fs/' + pkg.name;
+                  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+                }
+              "
+            fi
+          done
+          # 主包 index.js 里 require 的是 rush-fs-xxx，改为 @rush-fs/rush-fs-xxx 才能找到已发布的平台包
+          sed -i "s/require('rush-fs-/require('@rush-fs\/rush-fs-/g" index.js
+          sed -i 's/require(\"rush-fs-/require(\"@rush-fs\/rush-fs-/g' index.js
           npm publish --access public
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
