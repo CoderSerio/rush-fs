@@ -144,7 +144,8 @@ jobs:
         run: |
           npm config set provenance true
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          # 读取 package.json 版本号，检查对应的 tag 是否已存在
+          # 先 fetch tags，然后检查对应的 tag 是否已存在
+          git fetch --tags --force
           VERSION=$(node -p "require('./package.json').version")
           TAG="v$VERSION"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
