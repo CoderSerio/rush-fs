@@ -1,50 +1,51 @@
 <div align="center">
-  
-# Hyper-FS
-  
-  <p align="center">
-    <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
-    <img src="https://img.shields.io/npm/v/hyper-fs?style=flat-square" alt="NPM Version">
-    <img src="https://img.shields.io/npm/l/hyper-fs?style=flat-square" alt="License">
-  </p>
-  
-  <p align="center">
-    A high-performance, drop-in replacement for Node.js <code>fs</code> module, powered by Rust.
-  </p>
+
+# Rush-FS
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
+  <img src="https://img.shields.io/npm/v/rush-fs?style=flat-square" alt="NPM Version">
+  <img src="https://img.shields.io/npm/l/rush-fs?style=flat-square" alt="License">
+</p>
+
+<p align="center">
+  A high-performance, drop-in replacement for Node.js <code>fs</code> module, powered by Rust.
+</p>
+
 </div>
 
 ## Installation
 
 ```bash
-npm install hyper-fs
+npm install rush-fs
 # or
-pnpm add hyper-fs
+pnpm add rush-fs
 ```
 
 ## How does it works
 
-For the original Node.js, it works serially and cost lots of memory to parse os object and string into JS style: 
+For the original Node.js, it works serially and cost lots of memory to parse os object and string into JS style:
 
 ```mermaid
 graph TD
     A["JS: readdir"] -->|Call| B("Node.js C++ Binding")
     B -->|Submit Task| C{"Libuv Thread Pool"}
-    
+
     subgraph "Native Layer (Serial)"
     C -->|"Syscall: getdents"| D[OS Kernel]
     D -->|"Return File List"| C
     C -->|"Process Paths"| C
     end
-    
+
     C -->|"Results Ready"| E("V8 Main Thread")
-    
+
     subgraph "V8 Interaction (Heavy)"
     E -->|"Create JS String 1"| F[V8 Heap]
     E -->|"String 2"| F
     E -->|"String N..."| F
     F -->|"GC Pressure Rising"| F
     end
-    
+
     E -->|"Return Array"| G["JS Callback/Promise"]
 ```
 
@@ -54,24 +55,22 @@ But, it's saved with Rust now:
 graph TD
     A["JS: readdir"] -->|"N-API Call"| B("Rust Wrapper")
     B -->|"Spawn Thread/Task"| C{"Rust Thread Pool"}
-    
+
     subgraph "Rust 'Black Box'"
     C -->|"Rayon: Parallel work"| D[OS Kernel]
     D -->|"Syscall: getdents"| C
     C -->|"Store as Rust Vec<String>"| H[Rust Heap]
     H -->|"No V8 Interaction yet"| H
     end
-    
+
     C -->|"All Done"| I("Convert to JS")
-    
+
     subgraph "N-API Bridge"
     I -->|"Batch Create JS Array"| J[V8 Heap]
     end
-    
+
     J -->|Return| K["JS Result"]
 ```
-
-
 
 ## Status & Roadmap
 
@@ -81,7 +80,7 @@ We are rewriting `fs` APIs one by one.
 >
 > - ✅: Fully Supported
 > - 🚧: Partially Supported / WIP
-> - ✨：New feature from hyper-fs
+> - ✨：New feature from rush-fs
 > - ❌: Not Supported Yet
 
 ### `readdir`
@@ -367,7 +366,7 @@ We are rewriting `fs` APIs one by one.
 ## Usage
 
 ```ts
-import { readdir, stat, readFile, writeFile, mkdir, rm } from 'hyper-fs'
+import { readdir, stat, readFile, writeFile, mkdir, rm } from 'rush-fs'
 
 // Read directory
 const files = await readdir('./src')
@@ -398,11 +397,11 @@ await rm('./temp', { recursive: true, force: true })
 > Tested on Apple Silicon (arm64), Node.js 24.0.2, release build with LTO.
 > Run `pnpm build && pnpm bench` to reproduce.
 
-### Where Hyper-FS Shines
+### Where Rush-FS Shines
 
 These are the scenarios where Rust's parallelism and zero-copy I/O make a real difference:
 
-| Scenario                                         | Node.js   | Hyper-FS | Speedup   |
+| Scenario                                         | Node.js   | Rush-FS  | Speedup   |
 | ------------------------------------------------ | --------- | -------- | --------- |
 | `readdir` recursive (node_modules, ~30k entries) | 281 ms    | 23 ms    | **12x**   |
 | `glob` recursive (`**/*.rs`)                     | 25 ms     | 1.46 ms  | **17x**   |
@@ -419,27 +418,27 @@ These are the scenarios where Rust's parallelism and zero-copy I/O make a real d
 
 Single-file operations have a ~0.3 µs napi bridge overhead, making them roughly equivalent:
 
-| Scenario                   | Node.js | Hyper-FS | Ratio |
-| -------------------------- | ------- | -------- | ----- |
-| `stat` (single file)       | 1.45 µs | 1.77 µs  | 1.2x  |
-| `readFile` small (Buffer)  | 8.86 µs | 9.46 µs  | 1.1x  |
-| `writeFile` small (string) | 74 µs   | 66 µs    | 0.9x  |
-| `writeFile` small (Buffer) | 115 µs  | 103 µs   | 0.9x  |
-| `appendFile`               | 30 µs   | 27 µs    | 0.9x  |
+| Scenario                   | Node.js | Rush-FS | Ratio |
+| -------------------------- | ------- | ------- | ----- |
+| `stat` (single file)       | 1.45 µs | 1.77 µs | 1.2x  |
+| `readFile` small (Buffer)  | 8.86 µs | 9.46 µs | 1.1x  |
+| `writeFile` small (string) | 74 µs   | 66 µs   | 0.9x  |
+| `writeFile` small (Buffer) | 115 µs  | 103 µs  | 0.9x  |
+| `appendFile`               | 30 µs   | 27 µs   | 0.9x  |
 
 ### Where Node.js Wins
 
 Lightweight built-in calls where napi overhead is proportionally large:
 
-| Scenario                     | Node.js | Hyper-FS | Note                              |
-| ---------------------------- | ------- | -------- | --------------------------------- |
-| `existsSync` (existing file) | 444 ns  | 1.34 µs  | Node.js internal fast path        |
-| `accessSync` F_OK            | 456 ns  | 1.46 µs  | Same — napi overhead dominates    |
-| `writeFile` 4 MB string      | 2.93 ms | 5.69 ms  | Large string crossing napi bridge |
+| Scenario                     | Node.js | Rush-FS | Note                              |
+| ---------------------------- | ------- | ------- | --------------------------------- |
+| `existsSync` (existing file) | 444 ns  | 1.34 µs | Node.js internal fast path        |
+| `accessSync` F_OK            | 456 ns  | 1.46 µs | Same — napi overhead dominates    |
+| `writeFile` 4 MB string      | 2.93 ms | 5.69 ms | Large string crossing napi bridge |
 
 ### Parallelism
 
-Hyper-FS uses multi-threaded parallelism for operations that traverse the filesystem:
+Rush-FS uses multi-threaded parallelism for operations that traverse the filesystem:
 
 | API                   | Library                                                                   | `concurrency` option | Default |
 | --------------------- | ------------------------------------------------------------------------- | -------------------- | ------- |
@@ -452,21 +451,61 @@ Single-file operations (`stat`, `readFile`, `writeFile`, `chmod`, etc.) are atom
 
 ### Key Takeaway
 
-**Hyper-FS excels at recursive / batch filesystem operations** (readdir, glob, rm, cp) where Rust's parallel walkers deliver 2–70x speedups. For single-file operations it performs on par with Node.js. The napi bridge adds a fixed ~0.3 µs overhead per call, which only matters for sub-microsecond operations like `existsSync`.
+**Rush-FS excels at recursive / batch filesystem operations** (readdir, glob, rm, cp) where Rust's parallel walkers deliver 2–70x speedups. For single-file operations it performs on par with Node.js. The napi bridge adds a fixed ~0.3 µs overhead per call, which only matters for sub-microsecond operations like `existsSync`.
 
 **`cp` benchmark detail** (Apple Silicon, release build):
 
-| Scenario                                  | Node.js   | Hyper-FS 1T | Hyper-FS 4T | Hyper-FS 8T |
-| ----------------------------------------- | --------- | ----------- | ----------- | ----------- |
-| Flat dir (500 files)                      | 86.45 ms  | 61.56 ms    | 32.88 ms    | 36.67 ms    |
-| Tree dir (breadth=4, depth=3, ~84 nodes)  | 23.80 ms  | 16.94 ms    | 10.62 ms    | 9.76 ms     |
-| Tree dir (breadth=3, depth=5, ~363 nodes) | 108.73 ms | 75.39 ms    | 46.88 ms    | 46.18 ms    |
+| Scenario                                  | Node.js   | Rush-FS 1T | Rush-FS 4T | Rush-FS 8T |
+| ----------------------------------------- | --------- | ---------- | ---------- | ---------- |
+| Flat dir (500 files)                      | 86.45 ms  | 61.56 ms   | 32.88 ms   | 36.67 ms   |
+| Tree dir (breadth=4, depth=3, ~84 nodes)  | 23.80 ms  | 16.94 ms   | 10.62 ms   | 9.76 ms    |
+| Tree dir (breadth=3, depth=5, ~363 nodes) | 108.73 ms | 75.39 ms   | 46.88 ms   | 46.18 ms   |
 
 Optimal concurrency for `cp` is **4 threads** on Apple Silicon — beyond that, I/O bandwidth becomes the bottleneck and diminishing returns set in.
 
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the complete development guide — from environment setup, referencing Node.js source, writing Rust implementations, to testing and benchmarking.
+
+## Publishing (Maintainers Only)
+
+`rush-fs` ships prebuilt native binaries per platform. In this repo, `optionalDependencies` are omitted so CI can use `pnpm install --frozen-lockfile` (the platform packages are not published until release). **Before publishing**, add them back to `package.json` with the same version as the main package, for example:
+
+```json
+"optionalDependencies": {
+  "rush-fs-win32-x64-msvc": "<version>",
+  "rush-fs-darwin-x64": "<version>",
+  "rush-fs-linux-x64-gnu": "<version>",
+  "rush-fs-darwin-arm64": "<version>"
+}
+```
+
+Then publish both the platform-specific packages and the main package **in order**:
+
+1. Ensure you are logged in to npm (`npm login`).
+2. Bump the version via `pnpm version <patch|minor|major>`. This runs `pnpm preversion`, which builds the `.node` for the **current platform only** (output is in the crate root, not under `npm/`). **To verify the Mac build:** after `pnpm build` or `preversion`, check that the crate root contains `rush-fs.darwin-arm64.node` (Apple Silicon) or `rush-fs.darwin-x64.node` (Intel Mac). For `prepublishOnly` to see it, you must have the file under `npm/<platform>/` (see "Local single-platform publish" below).
+3. Run `pnpm prepublishOnly` (which runs `napi prepublish -t npm`) to publish each built package from `npm/` (e.g. `rush-fs-darwin-arm64`, `rush-fs-win32-x64-msvc`). **If you see "doesn't exist" here,** the `.node` is not in `npm/` yet—either use CI to build all platforms, or for local Mac-only: run `napi create-npm-dirs`, then copy `rush-fs.darwin-arm64.node` (or `darwin-x64`) into `npm/darwin-arm64/` (or `npm/darwin-x64/`), then run `pnpm prepublishOnly` again.
+4. Publish the main package with `pnpm publish --access public`. The `prepublishOnly` hook runs automatically, but running step 3 manually lets you verify each platform succeeded before tagging the main release.
+
+If any platform publish fails, fix it and re-run `pnpm prepublishOnly` before retrying `pnpm publish` so consumers never receive a release referring to missing optional dependencies.
+
+### How to verify the Mac build (方式 B 第 2 步后)
+
+- **Apple Silicon (M1/M2/M3):** in the repo root, a file named `rush-fs.darwin-arm64.node` must exist.
+- **Intel Mac:** in the repo root, a file named `rush-fs.darwin-x64.node` must exist.
+
+Command to check: `ls -la rush-fs.darwin-*.node` in the package directory. If you see the file, the Mac native build succeeded.
+
+### Local single-platform publish (Mac only)
+
+If you are not using CI and only have a Mac build:
+
+1. `pnpm build` (or `pnpm version patch` to also bump version).
+2. `napi create-npm-dirs` to create `npm/darwin-arm64/` (and other platform dirs).
+3. Copy the built `.node` into the matching npm dir, e.g.  
+   `cp rush-fs.darwin-arm64.node npm/darwin-arm64/`
+4. `pnpm prepublishOnly` — only the Mac platform package will be published; others will show "doesn't exist" (expected).
+5. `pnpm publish --access public`. Users on other platforms will need to build from source or you publish those platform packages later via CI.
 
 ## License
 

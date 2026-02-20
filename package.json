@@ -1,11 +1,11 @@
 {
-  "name": "hyper-fs",
-  "version": "0.0.1",
+  "name": "rush-fs",
+  "version": "0.0.3",
   "description": "High-performance drop-in replacement for Node.js fs module, powered by Rust",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hyper-fs/hyper-fs.git"
+    "url": "git+https://github.com/rush-fs/rush-fs.git"
   },
   "license": "MIT",
   "browser": "browser.js",
@@ -29,7 +29,7 @@
     "browser.js"
   ],
   "napi": {
-    "binaryName": "hyper-fs",
+    "binaryName": "rush-fs",
     "targets": [
       "x86_64-pc-windows-msvc",
       "x86_64-apple-darwin",

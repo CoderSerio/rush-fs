@@ -13,7 +13,7 @@ use std::path::Path;
 ///   encountered, Node.js retries the operation with a linear backoff of `retryDelay` ms longer on
 ///   each try. This option represents the number of retries.
 /// - `retryDelay`: The amount of time in milliseconds to wait between retries (default 100ms).
-/// - `concurrency` (hyper-fs extension): Number of parallel threads for recursive removal.
+/// - `concurrency` (rush-fs extension): Number of parallel threads for recursive removal.
 
 #[napi(object)]
 #[derive(Clone)]

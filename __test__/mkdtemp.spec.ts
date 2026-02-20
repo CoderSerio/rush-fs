@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
-const prefix = join(tmpdir(), 'hyper-fs-test-mkdtemp-')
+const prefix = join(tmpdir(), 'rush-fs-test-mkdtemp-')
 
 // ===== sync =====
 

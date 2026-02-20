@@ -3,7 +3,7 @@ import * as path from 'node:path'
 import * as os from 'node:os'
 import { mkdirSync } from '../index.js'
 
-const tmpDir = path.join(os.tmpdir(), `hyper-fs-bench-mkdir-${Date.now()}`)
+const tmpDir = path.join(os.tmpdir(), `rush-fs-bench-mkdir-${Date.now()}`)
 fs.mkdirSync(tmpDir, { recursive: true })
 
 const iterations = 100
@@ -51,7 +51,7 @@ runGroup('mkdir (single dir)', [
     },
   },
   {
-    name: 'Hyper-FS',
+    name: 'Rush-FS',
     fn: () => {
       const dir = path.join(tmpDir, `hyper-single-${counter++}`)
       mkdirSync(dir)
@@ -69,7 +69,7 @@ runGroup('mkdir (recursive, depth=5)', [
     },
   },
   {
-    name: 'Hyper-FS',
+    name: 'Rush-FS',
     fn: () => {
       const dir = path.join(tmpDir, `hyper-deep-${counter++}`, 'a', 'b', 'c', 'd')
       mkdirSync(dir, { recursive: true })
@@ -87,7 +87,7 @@ runGroup('mkdir (recursive, already exists)', [
     fn: () => fs.mkdirSync(existingDir, { recursive: true }),
   },
   {
-    name: 'Hyper-FS',
+    name: 'Rush-FS',
     fn: () => mkdirSync(existingDir, { recursive: true }),
   },
 ])
