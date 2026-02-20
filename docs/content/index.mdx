@@ -1,0 +1,33 @@
+# Rush-FS
+
+API-aligned with Node.js `fs` for **painless drop-in replacement** in existing projects. Get **multi-fold performance** in heavy file operations, powered by Rust.
+
+## Why Rush-FS?
+
+- **Drop-in replacement** — Same API as Node.js `fs`; swap the import and go.
+- **Faster where it matters** — Recursive `readdir`, `glob`, `rm`, and `cp` are 2–70× faster thanks to Rust's parallel walkers.
+- **Prebuilt binaries** — No build step for users; we ship native binaries per platform.
+
+## Quick example
+
+```ts
+import { readdir, readFile, writeFile, rm } from 'rush-fs'
+
+const files = await readdir('./src', { recursive: true, withFileTypes: true })
+const content = await readFile('./package.json', { encoding: 'utf8' })
+await writeFile('./out.txt', content)
+await rm('./temp', { recursive: true, force: true })
+```
+
+## Next steps
+
+- [Quick Start](/docs/guide/quick-start) — Install and first usage
+- [What is Rush-FS](/docs/guide/what-is-rush-fs) — Purpose and design
+- [Use Cases](/docs/guide/use-cases) — When to use Rush-FS (and when not)
+- [Benchmarks](/docs/benchmarks) — Performance numbers
+- [API](/docs/api) — Overview and per-API docs (e.g. [readdir](/docs/api/readdir), [readFile](/docs/api/read-file), [rm](/docs/api/rm))
+
+## Links
+
+- [GitHub](https://github.com/CoderSerio/rush-fs)
+- [npm](https://www.npmjs.com/package/rush-fs)
