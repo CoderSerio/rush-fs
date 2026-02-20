@@ -144,7 +144,16 @@ jobs:
         run: |
           npm config set provenance true
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          pnpm prepublishOnly
+          # 读取 package.json 版本号，检查对应的 tag 是否已存在
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping GitHub Release creation"
+            pnpm napi prepublish -t npm --no-gh-release
+          else
+            echo "Tag $TAG does not exist, will create GitHub Release"
+            pnpm prepublishOnly
+          fi
           npm publish --access public
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
