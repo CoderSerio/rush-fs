@@ -1,0 +1,34 @@
+# rmdir
+
+Remove an empty directory. Fails if the directory is not empty; use `rm` with `recursive: true` for non-empty trees.
+
+## Basic usage
+
+```ts
+import { rmdir } from 'rush-fs'
+
+await rmdir('./empty-dir')
+```
+
+## Methods
+
+### `rmdir(path)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `path`   | string | Path to the empty directory. |
+
+### `rmdirSync(path)`
+
+**Sync.** Same arguments; throws on error (e.g. `ENOTEMPTY` if not empty).
+
+## Performance
+
+Single syscall; on par with Node.js. No dedicated benchmark; see [Benchmarks](/benchmarks) for single-file overhead.
+
+## Notes
+
+- **Non-empty**: Use `rm(path, { recursive: true })` to remove a directory and its contents.
+- **Errors**: Same as Node.js (e.g. `ENOENT`, `ENOTEMPTY`, `EACCES`).

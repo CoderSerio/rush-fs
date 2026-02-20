@@ -45,7 +45,7 @@ const hex = await readFile('./file.bin', { encoding: 'hex' })
 - **Small files / Buffer**: Rush-FS is on par with Node.js (e.g. ~0.9–1.1× in micro-benchmarks). There is a small N-API overhead per call.
 - **Larger UTF-8 reads**: Rush-FS can be ~2× faster for 64 KB–4 MB UTF-8 reads in benchmarks, due to efficient decoding on the Rust side.
 
-See [Benchmarks](/docs/benchmarks) (e.g. `readFile` 4 MB utf8, 64 KB utf8).
+See [Benchmarks](/benchmarks) (e.g. `readFile` 4 MB utf8, 64 KB utf8).
 
 ## Notes
 

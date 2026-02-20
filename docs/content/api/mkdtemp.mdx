@@ -1,0 +1,35 @@
+# mkdtemp
+
+Create a unique temporary directory with the given prefix. Uses OS random source (`/dev/urandom` on Unix, `BCryptGenRandom` on Windows) with up to 10 retries.
+
+## Basic usage
+
+```ts
+import { mkdtemp } from 'rush-fs'
+
+const dir = await mkdtemp('/tmp/myapp-')
+console.log(dir) // e.g. /tmp/myapp-abc123
+```
+
+## Methods
+
+### `mkdtemp(prefix)`
+
+**Async.** Returns `Promise<string>` (the created directory path).
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `prefix` | string | Prefix for the directory name (e.g. path + trailing separator). |
+
+### `mkdtempSync(prefix)`
+
+**Sync.** Returns `string` or throws.
+
+## Performance
+
+Single syscall plus random generation; on par with Node.js. See [Benchmarks](/benchmarks).
+
+## Notes
+
+- **Prefix**: Include a trailing path separator (e.g. `os.tmpdir() + '/'`) so the random part is the last path component; same as Node.js.
+- **Cleanup**: Caller is responsible for removing the directory when done (e.g. `rm(dir, { recursive: true })`).

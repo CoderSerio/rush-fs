@@ -52,7 +52,7 @@ const all = await readdir('./src', {
 - **Recursive** (`recursive: true`): Rush-FS is **much faster** than Node.js (e.g. ~12× for a `node_modules`-sized tree) because it uses [jwalk](https://github.com/Byron/jwalk) for parallel directory traversal. Tuning `concurrency` can help on large trees.
 - **Non-recursive**: Still faster in many cases due to lower overhead; single-directory listing is a small win.
 
-See [Benchmarks](/docs/benchmarks) for numbers (e.g. `readdir` recursive ~30k entries: Node 281 ms vs Rush-FS 23 ms).
+See [Benchmarks](/benchmarks) for numbers (e.g. `readdir` recursive ~30k entries: Node 281 ms vs Rush-FS 23 ms).
 
 ## Notes
 

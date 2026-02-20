@@ -41,7 +41,15 @@ We are rewriting Node.js `fs` APIs one by one. This page gives an overview; the 
 
 ## Not supported yet
 
-- `fstat`, `open`, `opendir`, `close`, `watch`
+| API | Description | Main blocker / note |
+| --- | --- | --- |
+| `open` / `close` / `fstat` | File descriptor–based I/O (open returns fd; read/write/fstat/close use it). | Requires a cross-boundary fd mapping table (`Arc<Mutex<HashMap<fd, File>>>`), careful lifecycle and thread-safety; `napi::Env` is main-thread–only while async work runs in the thread pool. |
+| `opendir` | Directory iterator (`Dir` / `DirEnt` stream). | Not implemented yet; use `readdir` (optionally with `recursive` and `withFileTypes`) for directory listing. |
+| `watch` / `watchFile` | File system watching (FSEvents / inotify / ReadDirectoryChangesW). | Needs pushing a Rust event stream (e.g. via `notify` crate) into JS (e.g. `napi::threadsafe_function`); implementation is non-trivial and priority is under evaluation. |
+
+Planned extensions (from roadmap): stream APIs such as `createReadStream` / `createWriteStream` are higher difficulty (backpressure, pipe, etc.) and are long-term.
+
+Each supported API has a **dedicated doc page** in the sidebar (e.g. [readdir](/api/readdir), [readFile](/api/read-file), [glob](/api/glob)) with basic usage, methods, performance (benchmark tables), and notes.
 
 ## Sync variants
 

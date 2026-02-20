@@ -1,0 +1,37 @@
+# mkdir
+
+Create a directory. With `recursive: true`, creates all parent directories; returns the first created path.
+
+## Basic usage
+
+```ts
+import { mkdir } from 'rush-fs'
+
+await mkdir('./new-dir')
+await mkdir('./a/b/c', { recursive: true })
+const first = await mkdir('./x/y/z', { recursive: true, mode: 0o755 }) // first created path
+```
+
+## Methods
+
+### `mkdir(path, options?)`
+
+**Async.** Returns `Promise<string | undefined>` (recursive: first created path).
+
+| Argument  | Type   | Description |
+| --------- | ------ | ----------- |
+| `path`    | string | Directory path. |
+| `options` | object | Optional: `recursive` (boolean), `mode` (number). |
+
+### `mkdirSync(path, options?)`
+
+**Sync.** Same arguments; returns `string | undefined` when recursive.
+
+## Performance
+
+Single-directory and recursive mkdir are atomic/serial operations. No specific benchmark in the repo; expect on-par with Node.js (small N-API overhead per call). See [Benchmarks](/benchmarks) for general single-file behavior.
+
+## Notes
+
+- **recursive**: When true, creates parent directories as needed; does not fail if the path already exists (same as Node.js).
+- **mode**: Applied to created directories; default is platform-dependent. Use octal (e.g. `0o755`).

@@ -1,0 +1,44 @@
+# stat
+
+Get file/directory metadata. Follows symlinks; use `lstat` to inspect the link itself.
+
+## Basic usage
+
+```ts
+import { stat } from 'rush-fs'
+
+const s = await stat('./package.json')
+console.log(s.size, s.isFile(), s.isDirectory())
+console.log(s.mtime, s.atime)
+```
+
+## Methods
+
+### `stat(path)`
+
+**Async.** Returns `Promise<Stats>`.
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `path`   | string | File or directory path. |
+
+**Stats:** Numeric fields (`dev`, `mode`, `nlink`, `uid`, `gid`, `rdev`, `blksize`, `ino`, `size`, `blocks`, `atimeMs`, `mtimeMs`, `ctimeMs`, `birthtimeMs`), Date fields (`atime`, `mtime`, `ctime`, `birthtime`), methods (`isFile()`, `isDirectory()`, `isSymbolicLink()`, etc.). Error distinction: `ENOENT` vs `EACCES`.
+
+### `statSync(path)`
+
+**Sync.** Same arguments; returns `Stats` or throws.
+
+## Performance
+
+From repo benchmarks (`pnpm build && pnpm bench`):
+
+| Scenario        | Node.js | Rush-FS | Ratio |
+| --------------- | ------- | ------- | ----- |
+| stat (single file) | 1.45 µs | 1.77 µs | 1.2x  |
+
+On par with Node.js; small N-API overhead per call.
+
+## Notes
+
+- **Symlinks**: `stat` follows symlinks; use `lstat` for the link metadata.
+- **Dates**: `atime`, `mtime`, `ctime`, `birthtime` are `Date` objects; `*Ms` are numbers.

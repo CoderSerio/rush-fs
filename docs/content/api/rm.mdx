@@ -50,7 +50,7 @@ await rm('./large-tree', { recursive: true, force: true, concurrency: 4 })
 - **Recursive**: Rush-FS can be **~1.75×** faster than Node.js for large trees when using `concurrency` (e.g. 2000 files with 4 threads in benchmarks). Higher concurrency helps until I/O becomes the bottleneck.
 - **Single file**: On par with Node.js; small N-API overhead.
 
-See [Benchmarks](/docs/benchmarks) (e.g. `rm` 2000 files, 4 threads: Node 92 ms vs Rush-FS 53 ms).
+See [Benchmarks](/benchmarks) (e.g. `rm` 2000 files, 4 threads: Node 92 ms vs Rush-FS 53 ms).
 
 ## Notes
 

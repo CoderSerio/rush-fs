@@ -1,0 +1,35 @@
+# link
+
+Create a hard link from `existingPath` to `newPath`. Both paths refer to the same inode; not available on all filesystems (e.g. some Windows volumes).
+
+## Basic usage
+
+```ts
+import { link } from 'rush-fs'
+
+await link('./existing.txt', './hardlink.txt')
+```
+
+## Methods
+
+### `link(existingPath, newPath)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument       | Type   | Description |
+| -------------- | ------ | ----------- |
+| `existingPath` | string | Existing file path. |
+| `newPath`      | string | New hard link path. |
+
+### `linkSync(existingPath, newPath)`
+
+**Sync.** Same arguments; throws on error (e.g. `EXDEV` on cross-filesystem, or unsupported).
+
+## Performance
+
+Single syscall; on par with Node.js. See [Benchmarks](/benchmarks).
+
+## Notes
+
+- **Filesystems**: Hard links may not be supported (e.g. FAT, some network drives); same as Node.js.
+- **Directories**: Typically not allowed for directories; use symlinks for directory “aliases”.

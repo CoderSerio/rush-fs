@@ -1,0 +1,44 @@
+# copyFile
+
+Copy a file from `src` to `dest`. Does not copy directory trees.
+
+## Basic usage
+
+```ts
+import { copyFile } from 'rush-fs'
+import { constants } from 'node:fs'
+
+await copyFile('./a.txt', './b.txt')
+await copyFile('./a.txt', './b.txt', constants.COPYFILE_EXCL) // fail if dest exists
+```
+
+## Methods
+
+### `copyFile(src, dest, mode?)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `src`    | string | Source file path. |
+| `dest`   | string | Destination file path. |
+| `mode`   | number | Optional. e.g. `COPYFILE_EXCL` to fail if dest exists. |
+
+### `copyFileSync(src, dest, mode?)`
+
+**Sync.** Same arguments; throws on error.
+
+## Performance
+
+From repo benchmarks (`pnpm build && pnpm bench`):
+
+| Scenario        | Node.js | Rush-FS | Speedup |
+| --------------- | ------- | ------- | ------- |
+| copyFile 4 MB   | 4.67 ms | 0.09 ms | **50x** |
+
+Rush-FS is much faster for single-file copy due to efficient native I/O.
+
+## Notes
+
+- **Directories**: Use `cp` with `recursive: true` for directory trees. `copyFile` only copies a single file.
+- **COPYFILE_EXCL**: Use `constants.COPYFILE_EXCL` from `node:fs` (or the numeric value) to avoid overwriting an existing destination.

@@ -1,0 +1,35 @@
+# truncate
+
+Truncate or extend a file to the given length. If the file is longer, extra bytes are discarded; if shorter, it is zero-padded (or platform behavior).
+
+## Basic usage
+
+```ts
+import { truncate } from 'rush-fs'
+
+await truncate('./file.txt', 100) // trim or extend to 100 bytes
+await truncate('./file.txt')      // truncate to 0
+```
+
+## Methods
+
+### `truncate(path, len?)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `path`   | string | File path. |
+| `len`    | number | Optional. Target length in bytes; default 0. |
+
+### `truncateSync(path, len?)`
+
+**Sync.** Same arguments; throws on error.
+
+## Performance
+
+Single syscall; on par with Node.js. See [Benchmarks](/benchmarks).
+
+## Notes
+
+- **Extension**: When extending, behavior may be platform-dependent (zero-fill or sparse); same as Node.js.

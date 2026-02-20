@@ -1,0 +1,37 @@
+# symlink
+
+Create a symbolic link at `path` pointing to `target`. On Windows, `type` can be `'file'`, `'dir'`, or `'junction'`; on Unix it is ignored.
+
+## Basic usage
+
+```ts
+import { symlink } from 'rush-fs'
+
+await symlink('./target.txt', './link.txt')
+await symlink('./target-dir', './link-dir', 'dir') // Windows: directory symlink
+```
+
+## Methods
+
+### `symlink(target, path, type?)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `target` | string | Target path (stored in the link). |
+| `path`   | string | Symlink path to create. |
+| `type`   | 'file' \| 'dir' \| 'junction' | Optional. Windows only; ignored on Unix. |
+
+### `symlinkSync(target, path, type?)`
+
+**Sync.** Same arguments; throws on error (e.g. `EEXIST` if path exists).
+
+## Performance
+
+Single syscall; on par with Node.js. See [Benchmarks](/benchmarks).
+
+## Notes
+
+- **Windows**: Use `type: 'dir'` for directory symlinks, `'file'` for file symlinks, `'junction'` for directory junctions when applicable.
+- **Relative target**: Stored as-is; resolution is at read time (e.g. via `readlink`/`realpath`).
