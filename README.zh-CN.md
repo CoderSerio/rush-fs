@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
   <img src="https://img.shields.io/npm/v/rush-fs?style=flat-square" alt="NPM Version">
   <img src="https://img.shields.io/npm/l/rush-fs?style=flat-square" alt="License">
+  <a href="https://github.com/CoderSerio/rush-fs/graphs/contributors"><img src="https://img.shields.io/github/contributors/CoderSerio/rush-fs?style=flat-square" alt="Contributors"></a>
 </p>
 
 <p align="center">
