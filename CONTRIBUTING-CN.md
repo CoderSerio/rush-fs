@@ -506,3 +506,9 @@ GitHub Actions 会在 push / PR 时自动执行：
 4. **Publish** — 版本 tag 触发自动发布到 npm
 
 本地开发只需关注 `pnpm build:debug` + `pnpm test`，CI 会处理跨平台验证。
+
+### 发布前/后检查（维护者）
+
+在打新版本（例如运行 Release 工作流前后）：
+
+- 更新 [CHANGELOG.md](CHANGELOG.md)：将 **\[Unreleased]** 下的条目移到新的 `## [x.y.z] - YYYY-MM-DD` 小节，并在文末补充该版本的链接（`[x.y.z]: https://github.com/CoderSerio/rush-fs/compare/vA.B.C...vx.y.z`）。

@@ -126,20 +126,6 @@ jobs:
       - name: List packages
         run: ls -R ./npm
         shell: bash
-      - name: Add optionalDependencies for publish
-        run: |
-          node -e "
-          const fs = require('fs');
-          const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          const v = p.version;
-          p.optionalDependencies = {
-            '@rush-fs/rush-fs-win32-x64-msvc': v,
-            '@rush-fs/rush-fs-darwin-x64': v,
-            '@rush-fs/rush-fs-linux-x64-gnu': v,
-            '@rush-fs/rush-fs-darwin-arm64': v
-          };
-          fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
-          "
       - name: Update platform package names to use scope (@rush-fs/xxx)
         run: |
           for dir in npm/*/; do
@@ -193,6 +179,19 @@ jobs:
           # 主包 index.js 里 require 的是 rush-fs-xxx，改为 @rush-fs/rush-fs-xxx 才能找到已发布的平台包
           sed -i "s/require('rush-fs-/require('@rush-fs\/rush-fs-/g" index.js
           sed -i 's/require(\"rush-fs-/require(\"@rush-fs\/rush-fs-/g' index.js
+          # optionalDependencies 必须在 prepublish 之后注入，否则会被 prepublish 覆盖，导致用户 pnpm i rush-fs 时不会自动安装平台包
+          node -e "
+          const fs = require('fs');
+          const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const v = p.version;
+          p.optionalDependencies = {
+            '@rush-fs/rush-fs-win32-x64-msvc': v,
+            '@rush-fs/rush-fs-darwin-x64': v,
+            '@rush-fs/rush-fs-linux-x64-gnu': v,
+            '@rush-fs/rush-fs-darwin-arm64': v
+          };
+          fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
+          "
           npm publish --access public
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

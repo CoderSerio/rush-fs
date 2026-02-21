@@ -508,3 +508,9 @@ GitHub Actions on push/PR:
 4. **Publish** — Triggered by version tags; see [Release workflow](.github/workflows/Release.yml)
 
 For local development, `pnpm build:debug` and `pnpm test` are enough; CI handles cross-platform checks.
+
+### Release checklist (maintainers)
+
+When cutting a new version (e.g. before or after running the Release workflow):
+
+- Update [CHANGELOG.md](CHANGELOG.md): move items from **\[Unreleased]** into a new `## [x.y.z] - YYYY-MM-DD` section, and add the version link at the bottom (`[x.y.z]: https://github.com/CoderSerio/rush-fs/compare/vA.B.C...vx.y.z`).
