@@ -1,8 +1,9 @@
-# Release：仅维护者触发，构建四平台并发布到 npm
-# 触发方式：
-#   1. 手动：Actions → Release → Run workflow（使用当前 main 的 package.json version）
-#   2. 打 tag：git tag v0.0.3 && git push origin v0.0.3（需先已把 package.json 改为 0.0.3 并 push）
-# 仓库需配置 Secrets → NPM_TOKEN（npm 的 Automation token，Publish 权限）
+# Release: Maintainer-only; builds four platforms and publishes to npm.
+# Main package: @rush-fs/core (see package.json). Platform packages: @rush-fs/rush-fs-darwin-arm64, etc.
+# Trigger:
+#   1. Manual: Actions → Release → Run workflow (uses current main's package.json version)
+#   2. Tag: git tag v0.x.x && git push origin v0.x.x (bump version in package.json / Cargo.toml and push first)
+# Required: Secrets → NPM_TOKEN (npm Automation token with Publish permission)
 name: Release
 env:
   DEBUG: napi:*

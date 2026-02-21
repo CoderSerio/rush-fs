@@ -5,7 +5,7 @@ Check whether the process can access a file with the given mode (F_OK, R_OK, W_O
 ## Basic usage
 
 ```ts
-import { access } from 'rush-fs'
+import { access } from '@rush-fs/core'
 import { constants } from 'node:fs'
 
 await access('./file.txt') // F_OK default

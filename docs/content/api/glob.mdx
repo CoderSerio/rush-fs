@@ -5,7 +5,7 @@ Match files and directories by glob pattern (e.g. `**/*.js`). Supports **concurr
 ## Basic usage
 
 ```ts
-import { glob } from 'rush-fs'
+import { glob } from '@rush-fs/core'
 
 const files = await glob('**/*.ts', { cwd: './src' })
 const entries = await glob('**/*.rs', { cwd: './crate', withFileTypes: true, concurrency: 4, gitIgnore: true })

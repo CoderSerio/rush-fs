@@ -6,8 +6,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
-  <img src="https://img.shields.io/npm/v/rush-fs?style=flat-square" alt="NPM Version">
-  <img src="https://img.shields.io/npm/l/rush-fs?style=flat-square" alt="License">
+  <img src="https://img.shields.io/npm/v/@rush-fs/core?style=flat-square" alt="NPM Version">
+  <img src="https://img.shields.io/npm/l/@rush-fs/core?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/status-alpha-orange?style=flat-square" alt="Alpha">
   <a href="https://github.com/CoderSerio/rush-fs/graphs/contributors"><img src="https://img.shields.io/github/contributors/CoderSerio/rush-fs?style=flat-square" alt="Contributors"></a>
 </p>
 
@@ -15,17 +16,19 @@
   API-aligned with Node.js <code>fs</code> for painless drop-in replacement in existing projects; get multi-fold performance in heavy file operations, powered by Rust.
 </p>
 
+<p align="center"><strong>⚠️ Alpha:</strong> The package is currently in <strong>alpha</strong>. API and behavior may change before 0.1.0 stable.</p>
+
 </div>
 
 ## Installation
 
 ```bash
-npm install rush-fs
+npm install @rush-fs/core
 # or
-pnpm add rush-fs
+pnpm add @rush-fs/core
 ```
 
-When you install `rush-fs`, the package manager should automatically install the **platform-specific native binding** for your OS/arch via `optionalDependencies` (e.g. `@rush-fs/rush-fs-darwin-arm64` on macOS ARM). If the native binding is missing and you see "Cannot find native binding", try:
+When you install `@rush-fs/core`, the package manager should automatically install the **platform-specific native binding** for your OS/arch via `optionalDependencies` (e.g. `@rush-fs/rush-fs-darwin-arm64` on macOS ARM). If the native binding is missing and you see "Cannot find native binding", try:
 
 1. Remove `node_modules` and the lockfile (`package-lock.json` or `pnpm-lock.yaml`), then run `pnpm install` (or `npm i`) again.
 2. Or install the platform package explicitly:  
@@ -34,10 +37,12 @@ When you install `rush-fs`, the package manager should automatically install the
    **Windows x64:** `pnpm add @rush-fs/rush-fs-win32-x64-msvc`  
    **Linux x64 (glibc):** `pnpm add @rush-fs/rush-fs-linux-x64-gnu`
 
+**Migration from `rush-fs`:** The package was renamed to `@rush-fs/core`. See [CHANGELOG.md](./CHANGELOG.md#010-alpha0) for details.
+
 ## Usage
 
 ```ts
-import { readdir, stat, readFile, writeFile, mkdir, rm } from 'rush-fs'
+import { readdir, stat, readFile, writeFile, mkdir, rm } from '@rush-fs/core'
 
 // Read directory
 const files = await readdir('./src')
@@ -192,7 +197,7 @@ We are rewriting `fs` APIs one by one.
 >
 > - ✅: Fully Supported
 > - 🚧: Partially Supported / WIP
-> - ✨: New feature from rush-fs
+> - ✨: New feature from @rush-fs/core
 > - ❌: Not Supported Yet
 
 ### `readdir`

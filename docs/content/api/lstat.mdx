@@ -5,7 +5,7 @@ Get file/directory metadata without following symlinks. For the link target, use
 ## Basic usage
 
 ```ts
-import { lstat } from 'rush-fs'
+import { lstat } from '@rush-fs/core'
 
 const s = await lstat('./some-link')
 console.log(s.isSymbolicLink(), s.size)

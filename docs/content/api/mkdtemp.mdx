@@ -5,7 +5,7 @@ Create a unique temporary directory with the given prefix. Uses OS random source
 ## Basic usage
 
 ```ts
-import { mkdtemp } from 'rush-fs'
+import { mkdtemp } from '@rush-fs/core'
 
 const dir = await mkdtemp('/tmp/myapp-')
 console.log(dir) // e.g. /tmp/myapp-abc123

@@ -6,25 +6,28 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
-  <img src="https://img.shields.io/npm/v/rush-fs?style=flat-square" alt="NPM Version">
-  <img src="https://img.shields.io/npm/l/rush-fs?style=flat-square" alt="License">
+  <img src="https://img.shields.io/npm/v/@rush-fs/core?style=flat-square" alt="NPM Version">
+  <img src="https://img.shields.io/npm/l/@rush-fs/core?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/status-alpha-orange?style=flat-square" alt="Alpha">
   <a href="https://github.com/CoderSerio/rush-fs/graphs/contributors"><img src="https://img.shields.io/github/contributors/CoderSerio/rush-fs?style=flat-square" alt="Contributors"></a>
 </p>
 
 <p align="center">
   与 Node.js <code>fs</code> API 对齐，可无痛替换现有项目中的 fs；在海量文件操作场景下获得数倍于内置 fs 的性能，由 Rust 驱动。
 </p>
+
+<p align="center"><strong>⚠️ Alpha：</strong>当前为 <strong>alpha</strong> 版本，在 0.1.0 正式版前 API 与行为可能变更。</p>
 </div>
 
 ## 安装
 
 ```bash
-npm install rush-fs
+npm install @rush-fs/core
 # or
-pnpm add rush-fs
+pnpm add @rush-fs/core
 ```
 
-安装 `rush-fs` 时，包管理器会通过 `optionalDependencies` 自动安装**当前平台**的本地绑定（例如 macOS ARM 上的 `@rush-fs/rush-fs-darwin-arm64`）。若未安装或出现「Cannot find native binding」：
+安装 `@rush-fs/core` 时，包管理器会通过 `optionalDependencies` 自动安装**当前平台**的本地绑定（例如 macOS ARM 上的 `@rush-fs/rush-fs-darwin-arm64`）。若未安装或出现「Cannot find native binding」：
 
 1. 删除 `node_modules` 和锁文件（`package-lock.json` 或 `pnpm-lock.yaml`）后重新执行 `pnpm install`（或 `npm i`）。
 2. 或手动安装对应平台包：  
@@ -33,10 +36,12 @@ pnpm add rush-fs
    **Windows x64：** `pnpm add @rush-fs/rush-fs-win32-x64-msvc`  
    **Linux x64 (glibc)：** `pnpm add @rush-fs/rush-fs-linux-x64-gnu`
 
+**从 `rush-fs` 迁移：** 自 0.1.0-alpha 起主包更名为 `@rush-fs/core`，详见 [CHANGELOG.md](./CHANGELOG.md#010-alpha0)。
+
 ## 用法
 
 ```ts
-import { readdir, stat, readFile, writeFile, mkdir, rm } from 'rush-fs'
+import { readdir, stat, readFile, writeFile, mkdir, rm } from '@rush-fs/core'
 
 // 读取目录
 const files = await readdir('./src')
@@ -191,7 +196,7 @@ graph TD
 >
 > - ✅：完全支持
 > - 🚧：部分支持 / 开发中
-> - ✨：rush-fs 的新增能力
+> - ✨：@rush-fs/core 的新增能力
 > - ❌：暂未支持
 
 ### `readdir`

@@ -5,7 +5,7 @@ Copy files and directories recursively (Node.js 16.7+). Supports **concurrency**
 ## Basic usage
 
 ```ts
-import { cp } from 'rush-fs'
+import { cp } from '@rush-fs/core'
 
 await cp('./src', './dest', { recursive: true })
 await cp('./src', './dest', { recursive: true, force: true, concurrency: 4 })

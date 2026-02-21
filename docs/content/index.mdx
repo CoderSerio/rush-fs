@@ -11,7 +11,7 @@ API-aligned with Node.js `fs` for **painless drop-in replacement** in existing p
 ## Quick example
 
 ```ts
-import { readdir, readFile, writeFile, rm } from 'rush-fs'
+import { readdir, readFile, writeFile, rm } from '@rush-fs/core'
 
 const files = await readdir('./src', { recursive: true, withFileTypes: true })
 const content = await readFile('./package.json', { encoding: 'utf8' })
@@ -30,4 +30,4 @@ await rm('./temp', { recursive: true, force: true })
 ## Links
 
 - [GitHub](https://github.com/CoderSerio/rush-fs)
-- [npm](https://www.npmjs.com/package/rush-fs)
+- [npm](https://www.npmjs.com/package/@rush-fs/core)
