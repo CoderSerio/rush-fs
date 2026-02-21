@@ -1,0 +1,49 @@
+# Quick Start
+
+## Install
+
+```bash
+npm install rush-fs
+# or
+pnpm add rush-fs
+```
+
+## Use
+
+Import the APIs you need from `rush-fs` — same names as `node:fs`:
+
+```ts
+import { readdir, stat, readFile, writeFile, mkdir, rm } from 'rush-fs'
+
+// Read directory
+const files = await readdir('./src')
+
+// Recursive with file types
+const entries = await readdir('./src', {
+  recursive: true,
+  withFileTypes: true,
+})
+
+// Read / write files
+const content = await readFile('./package.json', { encoding: 'utf8' })
+await writeFile('./output.txt', 'hello world')
+
+// File stats
+const s = await stat('./package.json')
+console.log(s.size, s.isFile())
+
+// Create directory
+await mkdir('./new-dir', { recursive: true })
+
+// Remove
+await rm('./temp', { recursive: true, force: true })
+```
+
+## Async and sync
+
+- **Async** — All APIs are Promise-based; use `await` or `.then()`.
+- **Sync** — Supported APIs expose a sync variant with the `Sync` suffix (e.g. `readdirSync`, `statSync`). See [API Overview](/api) for the full list.
+
+## Compatibility
+
+Rush-FS targets **Node.js 18+**. Prebuilt binaries are provided for Windows (x64), macOS (x64, arm64), and Linux (x64).

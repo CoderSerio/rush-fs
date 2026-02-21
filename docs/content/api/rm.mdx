@@ -1,0 +1,59 @@
+# rm
+
+Remove files and directories. Supports recursive removal with optional **concurrency** (Rush-FS extension) for faster deletion of large trees.
+
+## Basic usage
+
+```ts
+import { rm } from 'rush-fs'
+
+// Remove a file
+await rm('./tmp.txt')
+
+// Remove a directory recursively
+await rm('./temp-dir', { recursive: true })
+
+// Force (ignore errors when path does not exist) + retries
+await rm('./maybe-missing', { recursive: true, force: true, maxRetries: 3 })
+
+// Recursive with concurrency (Rush-FS: faster for large trees)
+await rm('./large-tree', { recursive: true, force: true, concurrency: 4 })
+```
+
+## Methods
+
+### `rm(path, options?)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument  | Type   | Description |
+| --------- | ------ | ----------- |
+| `path`    | string | Path to file or directory. |
+| `options` | object | Optional. See below. |
+
+**Options:**
+
+| Option       | Type   | Default | Description |
+| ------------ | ------ | ------- | ----------- |
+| `force`     | boolean | false | If true, ignore `ENOENT` (path not found). |
+| `maxRetries`| number | 0      | Retry on transient errors (e.g. Windows locking). |
+| `recursive` | boolean | false | If true, remove directory and its contents. |
+| `retryDelay`| number | 100    | Delay in ms between retries. |
+| `concurrency` | number | 1    | **(Rush-FS)** Max concurrent delete operations in recursive mode. |
+
+### `rmSync(path, options?)`
+
+**Sync.** Same arguments; throws on error.
+
+## Performance
+
+- **Recursive**: Rush-FS can be **~1.75×** faster than Node.js for large trees when using `concurrency` (e.g. 2000 files with 4 threads in benchmarks). Higher concurrency helps until I/O becomes the bottleneck.
+- **Single file**: On par with Node.js; small N-API overhead.
+
+See [Benchmarks](/benchmarks) (e.g. `rm` 2000 files, 4 threads: Node 92 ms vs Rush-FS 53 ms).
+
+## Notes
+
+- **Recursive**: When `recursive: true`, Rush-FS uses [rayon](https://github.com/rayon-rs/rayon) for parallel deletion. Default `concurrency` is 1 for safety; increase (e.g. 4) for large directories.
+- **Windows**: `maxRetries` and `retryDelay` help with transient "access denied" or locking issues. Same semantics as Node.js.
+- **Symlinks**: Recursive removal does not follow symlinks; the link is removed, not the target. Matches Node.js behavior.

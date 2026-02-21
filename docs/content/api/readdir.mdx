@@ -1,0 +1,61 @@
+# readdir
+
+Read the contents of a directory. Supports non-recursive and recursive modes; recursive mode uses parallel traversal and benefits most from Rush-FS.
+
+## Basic usage
+
+```ts
+import { readdir } from 'rush-fs'
+
+// Names only (default)
+const names = await readdir('./src')
+// e.g. ['a.ts', 'b.ts', 'utils']
+
+// With file types (like Dirent)
+const entries = await readdir('./src', { withFileTypes: true })
+// e.g. [{ name: 'a.ts', parentPath: './src', isDir: false }, ...]
+
+// Recursive with concurrency (Rush-FS extension)
+const all = await readdir('./src', {
+  recursive: true,
+  withFileTypes: true,
+  concurrency: 4,
+})
+```
+
+## Methods
+
+### `readdir(path, options?)`
+
+**Async.** Returns `Promise<string[]>` or `Promise<Array<{ name, parentPath, isDir }>>` depending on `options.withFileTypes`.
+
+| Argument   | Type   | Description |
+| ---------- | ------ | ----------- |
+| `path`     | string | Directory path to read. |
+| `options`  | object | Optional. See below. |
+
+**Options:**
+
+| Option           | Type    | Default | Description |
+| ---------------- | ------- | ------- | ----------- |
+| `encoding`       | string  | `'utf8'` | Only `'utf8'` is supported; `'buffer'` is not. |
+| `withFileTypes`  | boolean | false  | If true, returns `{ name, parentPath, isDir }[]` instead of `string[]`. |
+| `recursive`      | boolean | false  | If true, walks the directory tree recursively. |
+| `concurrency`    | number  | auto   | **(Rush-FS)** Max concurrent tasks for recursive walk. |
+
+### `readdirSync(path, options?)`
+
+**Sync.** Same arguments and return types; throws on error.
+
+## Performance
+
+- **Recursive** (`recursive: true`): Rush-FS is **much faster** than Node.js (e.g. ~12× for a `node_modules`-sized tree) because it uses [jwalk](https://github.com/Byron/jwalk) for parallel directory traversal. Tuning `concurrency` can help on large trees.
+- **Non-recursive**: Still faster in many cases due to lower overhead; single-directory listing is a small win.
+
+See [Benchmarks](/benchmarks) for numbers (e.g. `readdir` recursive ~30k entries: Node 281 ms vs Rush-FS 23 ms).
+
+## Notes
+
+- **Encoding**: Only `encoding: 'utf8'` is supported. Node.js `readdir` with `encoding: 'buffer'` returns `Buffer[]`; that is not implemented.
+- **Symbolic links**: Recursive walk follows symlinks like Node.js; directory entries are reported with `isDir` based on the resolved type.
+- **Errors**: Same error codes as Node.js (e.g. `ENOENT`, `EACCES`). Errors are thrown (async) or thrown in sync.

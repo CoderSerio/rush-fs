@@ -1,0 +1,33 @@
+# unlink
+
+Remove a file. Fails for directories; use `rm` with `recursive: true` for directories.
+
+## Basic usage
+
+```ts
+import { unlink } from 'rush-fs'
+
+await unlink('./temp.txt')
+```
+
+## Methods
+
+### `unlink(path)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `path`   | string | File path to remove. |
+
+### `unlinkSync(path)`
+
+**Sync.** Same arguments; throws on error (e.g. `ENOENT`, `EISDIR`).
+
+## Performance
+
+Single syscall; on par with Node.js. No dedicated benchmark; see [Benchmarks](/benchmarks) for single-file overhead.
+
+## Notes
+
+- **Directories**: Use `rm(path, { recursive: true })` or `rmdir(path)` for empty dirs. `unlink` on a directory fails with `EISDIR` (or equivalent).

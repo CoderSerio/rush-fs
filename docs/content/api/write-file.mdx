@@ -1,0 +1,48 @@
+# writeFile
+
+Write data to a file, replacing the file if it exists. Supports encodings, `mode`, and `flag`.
+
+## Basic usage
+
+```ts
+import { writeFile } from 'rush-fs'
+
+await writeFile('./out.txt', 'hello world')
+await writeFile('./out.bin', buffer)
+await writeFile('./out.txt', 'content', { encoding: 'utf8', mode: 0o644 })
+```
+
+## Methods
+
+### `writeFile(path, data, options?)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument  | Type   | Description |
+| --------- | ------ | ----------- |
+| `path`    | string | File path. |
+| `data`    | string \| Buffer | Data to write. |
+| `options` | object | Optional. See below. |
+
+**Options:** `encoding` (utf8, ascii, latin1, base64, base64url, hex), `mode` (number), `flag` (e.g. `'w'`, `'wx'`, `'a'`, `'ax'`).
+
+### `writeFileSync(path, data, options?)`
+
+**Sync.** Same arguments; throws on error.
+
+## Performance
+
+From repo benchmarks (`pnpm build && pnpm bench`):
+
+| Scenario              | Node.js | Rush-FS | Ratio |
+| --------------------- | ------- | ------- | ----- |
+| writeFile small (string) | 74 µs  | 66 µs   | 0.9x  |
+| writeFile small (Buffer) | 115 µs | 103 µs  | 0.9x  |
+| writeFile 4 MB string | 2.93 ms | 5.69 ms | Node.js faster (large string over N-API) |
+
+Single-file writes are on par with Node.js for small payloads; for very large strings Node.js can be faster due to N-API copy cost.
+
+## Notes
+
+- **Encodings**: Same as Node.js (utf8, ascii, latin1, base64, base64url, hex).
+- **Large data**: Writing a very large string (e.g. 4 MB) crosses the N-API boundary and can be slower than Node.js; prefer `Buffer` for large binary data where possible.

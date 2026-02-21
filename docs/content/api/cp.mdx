@@ -1,0 +1,52 @@
+# cp
+
+Copy files and directories recursively (Node.js 16.7+). Supports **concurrency** (Rush-FS extension) for faster tree copy.
+
+## Basic usage
+
+```ts
+import { cp } from 'rush-fs'
+
+await cp('./src', './dest', { recursive: true })
+await cp('./src', './dest', { recursive: true, force: true, concurrency: 4 })
+```
+
+## Methods
+
+### `cp(src, dest, options?)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument  | Type   | Description |
+| --------- | ------ | ----------- |
+| `src`     | string | Source path (file or directory). |
+| `dest`    | string | Destination path. |
+| `options` | object | Optional. See below. |
+
+**Options:** `recursive` (boolean), `force` (boolean, default true), `errorOnExist`, `preserveTimestamps`, `dereference`, `verbatimSymlinks`, **`concurrency`** (number, Rush-FS, default 1).
+
+### `cpSync(src, dest, options?)`
+
+**Sync.** Same arguments; throws on error.
+
+## Performance
+
+From repo benchmarks (`pnpm build && pnpm bench`), Apple Silicon, release build:
+
+| Scenario                    | Node.js   | Rush-FS 4T | Speedup |
+| -------------------------- | --------- | ---------- | ------- |
+| Flat dir (500 files)       | 86.45 ms  | 32.88 ms   | **2.6x** |
+| Tree dir (~363 nodes)      | 108.73 ms | 46.88 ms   | **2.3x** |
+
+| Scenario                    | Rush-FS 1T | Rush-FS 4T | Rush-FS 8T |
+| --------------------------- | ---------- | ---------- | ---------- |
+| Flat dir (500 files)        | 61.56 ms   | 32.88 ms   | 36.67 ms   |
+| Tree dir (~84 nodes)        | 16.94 ms   | 10.62 ms   | 9.76 ms    |
+| Tree dir (~363 nodes)       | 75.39 ms   | 46.88 ms   | 46.18 ms   |
+
+Optimal **concurrency** on Apple Silicon is about **4 threads**; beyond that I/O becomes the bottleneck.
+
+## Notes
+
+- **concurrency**: Rush-FS extension. Increase (e.g. 4) for large directory trees; default is 1.
+- **Symlinks**: Options `dereference` and `verbatimSymlinks` behave like Node.js. Recursive copy does not follow symlinks by default.

@@ -1,0 +1,35 @@
+# utimes
+
+Set the access and modification times of a file (atime, mtime). Accepts numbers (seconds since epoch) or Date-like values per Node.js.
+
+## Basic usage
+
+```ts
+import { utimes } from 'rush-fs'
+
+await utimes('./file.txt', atime, mtime)
+```
+
+## Methods
+
+### `utimes(path, atime, mtime)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `path`   | string | File path. |
+| `atime`  | number | Access time (e.g. seconds since epoch). |
+| `mtime`  | number | Modification time. |
+
+### `utimesSync(path, atime, mtime)`
+
+**Sync.** Same arguments; throws on error.
+
+## Performance
+
+Single syscall; on par with Node.js. See [Benchmarks](/benchmarks).
+
+## Notes
+
+- **Precision**: Platform-dependent; same as Node.js.

@@ -1,0 +1,57 @@
+# Benchmarks
+
+Rush-FS excels at **recursive and batch filesystem operations** where Rust's parallel walkers deliver 2–70× speedups. Single-file operations are on par with Node.js.
+
+> Tested on Apple Silicon (arm64), Node.js 24.0.2, release build with LTO. Run `pnpm build && pnpm bench` in the [repo](https://github.com/CoderSerio/rush-fs) to reproduce.
+
+## Where Rush-FS shines
+
+| Scenario                                         | Node.js   | Rush-FS  | Speedup   |
+| ------------------------------------------------ | --------- | -------- | --------- |
+| `readdir` recursive (node_modules, ~30k entries) | 281 ms    | 23 ms    | **12x**   |
+| `glob` recursive (`**/*.rs`)                     | 25 ms     | 1.46 ms  | **17x**   |
+| `glob` recursive vs fast-glob                    | 102 ms    | 1.46 ms  | **70x**   |
+| `copyFile` 4 MB                                  | 4.67 ms   | 0.09 ms  | **50x**   |
+| `readFile` 4 MB utf8                             | 1.86 ms   | 0.92 ms  | **2x**    |
+| `rm` 2000 files (4 threads)                      | 92 ms     | 53 ms    | **1.75x** |
+| `cp` 500-file flat dir (4 threads)               | 86.45 ms  | 32.88 ms | **2.6x**  |
+| `cp` tree dir ~363 nodes (4 threads)             | 108.73 ms | 46.88 ms | **2.3x**  |
+
+## On par with Node.js
+
+Single-file operations have a ~0.3 µs napi bridge overhead; overall they are roughly equivalent:
+
+| Scenario                   | Node.js | Rush-FS | Ratio |
+| -------------------------- | ------- | ------- | ----- |
+| `stat` (single file)       | 1.45 µs | 1.77 µs | 1.2x  |
+| `readFile` small (Buffer)  | 8.86 µs | 9.46 µs | 1.1x  |
+| `writeFile` small (string) | 74 µs   | 66 µs   | 0.9x  |
+| `appendFile`               | 30 µs   | 27 µs   | 0.9x  |
+
+## Where Node.js wins
+
+For very lightweight built-in calls, napi overhead dominates:
+
+| Scenario                     | Node.js | Rush-FS | Note                       |
+| ---------------------------- | ------- | ------- | -------------------------- |
+| `existsSync` (existing file) | 444 ns  | 1.34 µs | Node.js internal fast path |
+| `accessSync` F_OK            | 456 ns  | 1.46 µs | Same                       |
+
+## Parallelism
+
+Rush-FS uses multi-threaded parallelism for traversal operations:
+
+| API                   | `concurrency` option | Default |
+| --------------------- | --------------------- | ------- |
+| `readdir` (recursive) | ✅                     | auto    |
+| `glob`                | ✅                     | 4       |
+| `rm` (recursive)      | ✅                     | 1       |
+| `cp` (recursive)      | ✅                     | 1       |
+
+Single-file operations (`stat`, `readFile`, `writeFile`, `chmod`, etc.) are atomic syscalls — parallelism does not apply.
+
+## Takeaway
+
+**Use Rush-FS when you have heavy recursive or batch I/O** (readdir, glob, rm, cp). For single-file work it performs on par with Node.js; the napi bridge adds a fixed ~0.3 µs per call, which only matters for sub-microsecond operations like `existsSync`.
+
+For more numbers (including `cp` thread scaling), see the [README Benchmarks](https://github.com/CoderSerio/rush-fs#benchmarks) section.

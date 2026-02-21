@@ -1,0 +1,36 @@
+# chown
+
+Change the owner and group of a file or directory (Unix). On Windows this is a no-op or limited.
+
+## Basic usage
+
+```ts
+import { chown } from 'rush-fs'
+
+await chown('./file', uid, gid)
+```
+
+## Methods
+
+### `chown(path, uid, gid)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `path`   | string | File or directory path. |
+| `uid`    | number | User id. |
+| `gid`    | number | Group id. |
+
+### `chownSync(path, uid, gid)`
+
+**Sync.** Same arguments; throws on error (e.g. `EPERM`).
+
+## Performance
+
+Single syscall; on par with Node.js. See [Benchmarks](/benchmarks).
+
+## Notes
+
+- **Windows**: Typically requires elevated privileges or has no effect; same as Node.js.
+- **Root**: Changing ownership usually requires root/sudo on Unix.

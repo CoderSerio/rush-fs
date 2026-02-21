@@ -1,0 +1,36 @@
+# rename
+
+Rename or move a file or directory from `oldPath` to `newPath`. Cross-device moves may have platform limits.
+
+## Basic usage
+
+```ts
+import { rename } from 'rush-fs'
+
+await rename('./old.txt', './new.txt')
+await rename('./dir', './renamed-dir')
+```
+
+## Methods
+
+### `rename(oldPath, newPath)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument   | Type   | Description |
+| ---------- | ------ | ----------- |
+| `oldPath`  | string | Current path. |
+| `newPath`  | string | New path. |
+
+### `renameSync(oldPath, newPath)`
+
+**Sync.** Same arguments; throws on error.
+
+## Performance
+
+Single syscall; on par with Node.js. See [Benchmarks](/benchmarks) for single-file behavior.
+
+## Notes
+
+- **Overwrite**: On many platforms `newPath` can be overwritten if it exists; behavior is platform-dependent (same as Node.js).
+- **Cross-device**: Moving across filesystems may not be supported; copy + delete may be required.

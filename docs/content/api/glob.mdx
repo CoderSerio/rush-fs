@@ -1,0 +1,46 @@
+# glob
+
+Match files and directories by glob pattern (e.g. `**/*.js`). Supports **concurrency** and **gitIgnore** (Rush-FS extensions). Uses [ignore](https://github.com/BurntSushi/ripgrep/tree/master/crates/ignore) for matching.
+
+## Basic usage
+
+```ts
+import { glob } from 'rush-fs'
+
+const files = await glob('**/*.ts', { cwd: './src' })
+const entries = await glob('**/*.rs', { cwd: './crate', withFileTypes: true, concurrency: 4, gitIgnore: true })
+```
+
+## Methods
+
+### `glob(pattern, options?)`
+
+**Async.** Returns `Promise<string[]>` or `Promise<Array<{ name, parentPath, isDir }>>` when `withFileTypes: true`.
+
+| Argument  | Type   | Description |
+| --------- | ------ | ----------- |
+| `pattern` | string | Glob pattern (e.g. `**/*.js`). |
+| `options` | object | Optional. See below. |
+
+**Options:** `cwd` (string), `withFileTypes` (boolean), `exclude` (string[]), **`concurrency`** (number, default 4), **`gitIgnore`** (boolean, respect .gitignore).
+
+### `globSync(pattern, options?)`
+
+**Sync.** Same arguments and return types.
+
+## Performance
+
+From repo benchmarks (`pnpm build && pnpm bench`):
+
+| Scenario                  | Node.js (glob) | Rush-FS | Speedup |
+| ------------------------- | -------------- | ------- | ------- |
+| glob recursive `**/*.rs`  | 25 ms          | 1.46 ms | **17x** |
+| glob recursive vs fast-glob | 102 ms       | 1.46 ms | **70x** |
+
+Rush-FS is much faster for recursive glob; tune `concurrency` for large trees.
+
+## Notes
+
+- **gitIgnore**: When true, respects .gitignore (and similar) for exclusion; Rush-FS extension.
+- **concurrency**: Rush-FS extension; default 4. Increase for very large directories.
+- **exclude**: Additional patterns to exclude; applied with the same semantics as the ignore crate.

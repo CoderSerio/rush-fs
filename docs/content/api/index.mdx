@@ -1,0 +1,58 @@
+# API Overview
+
+We are rewriting Node.js `fs` APIs one by one. This page gives an overview; the full list with argument and return types is in the [README](https://github.com/CoderSerio/rush-fs#status--roadmap).
+
+## Legend
+
+- **✅** — Fully supported
+- **🚧** — Partially supported / WIP
+- **✨** — Extra option or behavior from Rush-FS (e.g. `concurrency`)
+- **❌** — Not supported yet
+
+## Supported APIs
+
+| API          | Status | Notes                                      |
+| ------------ | ------ | ------------------------------------------ |
+| `readdir`    | ✅     | `withFileTypes`, `recursive`, `concurrency` ✨ |
+| `readFile`   | ✅     | encodings, `flag`                          |
+| `writeFile`  | ✅     | encodings, `mode`, `flag`                  |
+| `appendFile` | ✅     |                                            |
+| `copyFile`   | ✅     | `COPYFILE_EXCL`                            |
+| `cp`         | ✅     | recursive, `concurrency` ✨                 |
+| `mkdir`      | ✅     | `recursive`, `mode`                        |
+| `rm`         | ✅     | `recursive`, `force`, `concurrency` ✨     |
+| `rmdir`      | ✅     |                                            |
+| `stat`       | ✅     | full `Stats` (dates, methods)              |
+| `lstat`      | ✅     |                                            |
+| `access`     | ✅     | F_OK, R_OK, W_OK, X_OK                      |
+| `exists`     | ✅     |                                            |
+| `unlink`     | ✅     |                                            |
+| `rename`     | ✅     |                                            |
+| `readlink`   | ✅     |                                            |
+| `realpath`   | ✅     |                                            |
+| `chmod`      | ✅     |                                            |
+| `chown`      | ✅     |                                            |
+| `utimes`     | ✅     |                                            |
+| `truncate`   | ✅     |                                            |
+| `symlink`    | ✅     |                                            |
+| `link`       | ✅     |                                            |
+| `mkdtemp`    | ✅     |                                            |
+| `glob`       | ✅     | ✨ `concurrency`, `gitIgnore`              |
+
+## Not supported yet
+
+| API | Description | Main blocker / note |
+| --- | --- | --- |
+| `open` / `close` / `fstat` | File descriptor–based I/O (open returns fd; read/write/fstat/close use it). | Requires a cross-boundary fd mapping table (`Arc<Mutex<HashMap<fd, File>>>`), careful lifecycle and thread-safety; `napi::Env` is main-thread–only while async work runs in the thread pool. |
+| `opendir` | Directory iterator (`Dir` / `DirEnt` stream). | Not implemented yet; use `readdir` (optionally with `recursive` and `withFileTypes`) for directory listing. |
+| `watch` / `watchFile` | File system watching (FSEvents / inotify / ReadDirectoryChangesW). | Needs pushing a Rust event stream (e.g. via `notify` crate) into JS (e.g. `napi::threadsafe_function`); implementation is non-trivial and priority is under evaluation. |
+
+Planned extensions (from roadmap): stream APIs such as `createReadStream` / `createWriteStream` are higher difficulty (backpressure, pipe, etc.) and are long-term.
+
+Each supported API has a **dedicated doc page** in the sidebar (e.g. [readdir](/api/readdir), [readFile](/api/read-file), [glob](/api/glob)) with basic usage, methods, performance (benchmark tables), and notes.
+
+## Sync variants
+
+Supported APIs expose both async (e.g. `readdir`) and sync (e.g. `readdirSync`) forms. Import the same names from `rush-fs` as you would from `node:fs`.
+
+For full TypeScript signatures and option details, see the [README Status & Roadmap](https://github.com/CoderSerio/rush-fs#status--roadmap) section.

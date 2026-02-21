@@ -1,0 +1,54 @@
+# readFile
+
+Read the entire contents of a file. Returns a `Buffer` or a decoded string depending on `encoding`.
+
+## Basic usage
+
+```ts
+import { readFile } from 'rush-fs'
+
+// As UTF-8 string (default)
+const text = await readFile('./package.json', { encoding: 'utf8' })
+
+// As Buffer
+const buf = await readFile('./image.png')
+
+// Other encodings
+const base64 = await readFile('./file.bin', { encoding: 'base64' })
+const hex = await readFile('./file.bin', { encoding: 'hex' })
+```
+
+## Methods
+
+### `readFile(path, options?)`
+
+**Async.** Returns `Promise<string | Buffer>`.
+
+| Argument  | Type   | Description |
+| --------- | ------ | ----------- |
+| `path`    | string | File path. |
+| `options` | object | Optional. See below. |
+
+**Options:**
+
+| Option    | Type   | Default | Description |
+| --------- | ------ | ------- | ----------- |
+| `encoding` | string | null   | `'utf8'`, `'ascii'`, `'latin1'`, `'base64'`, `'base64url'`, `'hex'`. If set, returns `string`; otherwise returns `Buffer`. |
+| `flag`   | string | `'r'`   | File open flag (e.g. `'r'`, `'r+'`). |
+
+### `readFileSync(path, options?)`
+
+**Sync.** Same arguments and return types; throws on error.
+
+## Performance
+
+- **Small files / Buffer**: Rush-FS is on par with Node.js (e.g. ~0.9–1.1× in micro-benchmarks). There is a small N-API overhead per call.
+- **Larger UTF-8 reads**: Rush-FS can be ~2× faster for 64 KB–4 MB UTF-8 reads in benchmarks, due to efficient decoding on the Rust side.
+
+See [Benchmarks](/benchmarks) (e.g. `readFile` 4 MB utf8, 64 KB utf8).
+
+## Notes
+
+- **Encodings**: Supported encodings are `utf8`, `ascii`, `latin1`, `base64`, `base64url`, `hex`. Behavior matches Node.js where implemented.
+- **Flags**: Standard flags (e.g. `r`, `r+`) are supported. Use the same semantics as Node.js for compatibility.
+- **Large files**: Reading the whole file into memory is the same as Node.js; for very large files consider streaming (Node.js `fs.createReadStream`; Rush-FS does not provide a stream API for this yet).

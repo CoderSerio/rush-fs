@@ -1,0 +1,36 @@
+# lstat
+
+Get file/directory metadata without following symlinks. For the link target, use `stat`.
+
+## Basic usage
+
+```ts
+import { lstat } from 'rush-fs'
+
+const s = await lstat('./some-link')
+console.log(s.isSymbolicLink(), s.size)
+```
+
+## Methods
+
+### `lstat(path)`
+
+**Async.** Returns `Promise<Stats>`.
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `path`   | string | File, directory, or symlink path. |
+
+Return type `Stats` is the same as `stat`; when `path` is a symlink, the returned stats describe the link, not the target.
+
+### `lstatSync(path)`
+
+**Sync.** Same arguments; returns `Stats` or throws.
+
+## Performance
+
+Single syscall; same order as `stat`. On par with Node.js (~1.2x in micro-benchmarks). See [Benchmarks](/benchmarks).
+
+## Notes
+
+- **Symlinks**: Use `lstat` to detect and inspect symlinks; use `stat` to get the resolved file’s stats.

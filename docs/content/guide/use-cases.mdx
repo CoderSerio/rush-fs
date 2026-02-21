@@ -1,0 +1,28 @@
+# Use Cases
+
+## When Rush-FS shines
+
+Use Rush-FS when you have **recursive or batch filesystem work**:
+
+- **Recursive directory listing** — `readdir` with `recursive: true` (e.g. walking `node_modules`, large trees).
+- **Glob matching** — `glob` over many files; Rush-FS is much faster than Node.js or fast-glob in typical benchmarks.
+- **Recursive delete** — `rm` with `recursive: true` and optional `concurrency` for large trees.
+- **Recursive copy** — `cp` with `recursive: true` and optional `concurrency`.
+
+In these scenarios, Rust's parallel walkers and lower V8 overhead often yield **2–70×** speedups. See [Benchmarks](/benchmarks) for numbers.
+
+## When Node.js is fine
+
+- **Single-file operations** — `stat`, `readFile`, `writeFile`, `chmod`, etc. are on par with Node.js; the N-API bridge adds a small fixed overhead (~0.3 µs per call).
+- **Tiny, hot paths** — For sub-microsecond built-ins like `existsSync` or `accessSync` (F_OK), Node.js can be faster because it has an internal fast path; Rush-FS still crosses N-API.
+
+So: use Rush-FS for **heavy I/O and recursion**; for simple one-off file ops either is fine.
+
+## Summary
+
+| Scenario                     | Prefer        |
+| ---------------------------- | ------------- |
+| Recursive readdir / glob     | Rush-FS       |
+| Recursive rm / cp            | Rush-FS       |
+| Single-file read/write/stat  | Either        |
+| existsSync / accessSync hot  | Node.js       |

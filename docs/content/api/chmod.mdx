@@ -1,0 +1,35 @@
+# chmod
+
+Change the permissions of a file or directory (mode bits).
+
+## Basic usage
+
+```ts
+import { chmod } from 'rush-fs'
+
+await chmod('./script.sh', 0o755)
+await chmod('./file.txt', 0o644)
+```
+
+## Methods
+
+### `chmod(path, mode)`
+
+**Async.** Returns `Promise<void>`.
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `path`   | string | File or directory path. |
+| `mode`   | number | Mode (e.g. 0o755, 0o644). |
+
+### `chmodSync(path, mode)`
+
+**Sync.** Same arguments; throws on error.
+
+## Performance
+
+Single syscall; on par with Node.js. See [Benchmarks](/benchmarks).
+
+## Notes
+
+- **Windows**: Mode has limited meaning on Windows (mainly read-only); same as Node.js.

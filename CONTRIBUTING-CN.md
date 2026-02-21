@@ -483,7 +483,16 @@ pnpm bench
 - [ ] 在 `__test__/` 下编写了测试（功能 + 双跑对比 + 错误处理）
 - [ ] `pnpm test` 全部通过
 - [ ] 更新了 `README.md` 和 `README.zh-CN.md` 的 Roadmap 状态
+- [ ] **文档**：新增或修改 API 时，需在 `docs/content/api/` 下新增或更新对应页面（见 [文档](#文档) 与 `.cursor/rules/docs-conventions.mdc`）。性能部分需运行 `pnpm bench` 并用表格展示，至少与 Node.js `fs` 对比。
 - [ ] （如适用）在 `benchmark/` 下编写了性能测试并附上结果
+
+---
+
+## 文档
+
+- **每个已支持的 API 都应有对应的文档页**，位于 `docs/content/api/`。文档站（Nextra）在 `docs/` 目录，在仓库根目录执行 `pnpm doc:dev` 可本地预览。
+- **当你新增或修改某个 API 时**，需在 `docs/content/api/` 下新增或更新对应文件（如 `docs/content/api/readdir.mdx`），并在 `docs/content/api/_meta.js` 中登记。每个 API 页须包含：**基础用法**、**方法**（签名与选项）、**性能**（来自 `pnpm bench` 的数据，表格形式，至少与 Node.js `fs` 对比）、**其他补充**（已知问题、使用建议）。完整约定见 `.cursor/rules/docs-conventions.mdc`。
+- **保持文档同步**：若修改了行为或选项，请同步更新该 API 文档和 README 的 Roadmap，避免文档与实现不一致。
 
 ---
 

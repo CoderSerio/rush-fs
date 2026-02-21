@@ -1,0 +1,34 @@
+# readlink
+
+Read the target path of a symbolic link. Fails for non-symlinks.
+
+## Basic usage
+
+```ts
+import { readlink } from 'rush-fs'
+
+const target = await readlink('./mylink')
+console.log(target) // resolved target path
+```
+
+## Methods
+
+### `readlink(path)`
+
+**Async.** Returns `Promise<string>` (the link target path).
+
+| Argument | Type   | Description |
+| -------- | ------ | ----------- |
+| `path`   | string | Symlink path. |
+
+### `readlinkSync(path)`
+
+**Sync.** Returns `string` or throws (e.g. `EINVAL` if not a symlink).
+
+## Performance
+
+Single syscall; on par with Node.js. See [Benchmarks](/benchmarks).
+
+## Notes
+
+- **Resolution**: Returns the raw target string; use `realpath` to resolve to an absolute path and follow nested symlinks.

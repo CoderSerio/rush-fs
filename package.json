@@ -46,6 +46,9 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
+    "doc:dev": "pnpm -C docs dev",
+    "doc:build": "pnpm -C docs build",
+    "doc:start": "pnpm -C docs start",
     "bench": "node --import @oxc-node/core/register benchmark/bench.ts",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
