@@ -24,6 +24,15 @@ npm install rush-fs
 pnpm add rush-fs
 ```
 
+安装 `rush-fs` 时，包管理器会通过 `optionalDependencies` 自动安装**当前平台**的本地绑定（例如 macOS ARM 上的 `@rush-fs/rush-fs-darwin-arm64`）。若未安装或出现「Cannot find native binding」：
+
+1. 删除 `node_modules` 和锁文件（`package-lock.json` 或 `pnpm-lock.yaml`）后重新执行 `pnpm install`（或 `npm i`）。
+2. 或手动安装对应平台包：  
+   **macOS ARM：** `pnpm add @rush-fs/rush-fs-darwin-arm64`  
+   **macOS x64：** `pnpm add @rush-fs/rush-fs-darwin-x64`  
+   **Windows x64：** `pnpm add @rush-fs/rush-fs-win32-x64-msvc`  
+   **Linux x64 (glibc)：** `pnpm add @rush-fs/rush-fs-linux-x64-gnu`
+
 ## 用法
 
 ```ts
@@ -465,6 +474,10 @@ graph TD
 
 - **状态**：❌
 
+## 更新日志
+
+各版本变更见 [CHANGELOG.md](./CHANGELOG.md)。发布 tag 列表见 [GitHub Releases](https://github.com/CoderSerio/rush-fs/releases)。
+
 ## 贡献
 
 参阅 [CONTRIBUTING-CN.md](./CONTRIBUTING-CN.md) 获取完整开发指南：环境搭建、参考 Node.js 源码、编写 Rust 实现、测试与性能基准。
@@ -475,6 +488,7 @@ graph TD
 
 1. **Secrets：** 在仓库 **Settings → Secrets and variables → Actions** 中添加 **NPM_TOKEN**（npm Classic 或 Automation token，需具备 Publish 权限）。
 2. **发布：** 在 **Actions → Release → Run workflow** 中手动运行（使用当前 `main` 上的 `package.json` 版本），或先更新 `package.json` 与 `Cargo.toml` 中的版本号并推送到 `main`，再创建并推送 tag：`git tag v<版本号> && git push origin v<版本号>`。
+3. **更新日志：** 发布前或发布后更新 [CHANGELOG.md](./CHANGELOG.md)（将 `[Unreleased]` 下的条目移到新版本标题下并补充 compare 链接）。
 
 工作流会自动注入 `optionalDependencies` 并发布所有包，无需在 `package.json` 中手动填写。
 

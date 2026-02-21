@@ -25,6 +25,15 @@ npm install rush-fs
 pnpm add rush-fs
 ```
 
+When you install `rush-fs`, the package manager should automatically install the **platform-specific native binding** for your OS/arch via `optionalDependencies` (e.g. `@rush-fs/rush-fs-darwin-arm64` on macOS ARM). If the native binding is missing and you see "Cannot find native binding", try:
+
+1. Remove `node_modules` and the lockfile (`package-lock.json` or `pnpm-lock.yaml`), then run `pnpm install` (or `npm i`) again.
+2. Or install the platform package explicitly:  
+   **macOS ARM:** `pnpm add @rush-fs/rush-fs-darwin-arm64`  
+   **macOS x64:** `pnpm add @rush-fs/rush-fs-darwin-x64`  
+   **Windows x64:** `pnpm add @rush-fs/rush-fs-win32-x64-msvc`  
+   **Linux x64 (glibc):** `pnpm add @rush-fs/rush-fs-linux-x64-gnu`
+
 ## Usage
 
 ```ts
@@ -466,6 +475,10 @@ We are rewriting `fs` APIs one by one.
 
 - **Status**: ❌
 
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a summary of changes in each version. Release tags are listed in [GitHub Releases](https://github.com/CoderSerio/rush-fs/releases).
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full development guide: environment setup, Node.js reference, Rust implementation, testing, and benchmarking.
@@ -476,6 +489,7 @@ Releases are handled by the [Release workflow](.github/workflows/Release.yml): i
 
 1. **Secrets:** In the repo **Settings → Secrets and variables → Actions**, add **NPM_TOKEN** (npm Classic or Automation token with Publish permission).
 2. **Release:** Either run **Actions → Release → Run workflow** (uses the current `package.json` version on `main`), or bump version in `package.json` and `Cargo.toml`, push to `main`, then create and push a tag: `git tag v<version> && git push origin v<version>`.
+3. **Changelog:** Update [CHANGELOG.md](./CHANGELOG.md) before or right after the release (move entries from `[Unreleased]` to a new version heading and add the compare link).
 
 The workflow injects `optionalDependencies` and publishes all packages; no need to edit `package.json` manually for release.
 

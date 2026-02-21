@@ -508,3 +508,14 @@ GitHub Actions on push/PR:
 4. **Publish** — Triggered by version tags; see [Release workflow](.github/workflows/Release.yml)
 
 For local development, `pnpm build:debug` and `pnpm test` are enough; CI handles cross-platform checks.
+
+### Release checklist (maintainers)
+
+When cutting a new version (before running the Release workflow):
+
+1. **Bump version** in both places (must stay in sync):
+   - `package.json` → `"version": "x.y.z"`
+   - `Cargo.toml` → `version = "x.y.z"`
+   - npm does not allow re-publishing the same version; if a previous run partially published (e.g. 0.0.4 already on npm), bump to the next version (e.g. 0.0.5) and release again.
+2. **Update [CHANGELOG.md](CHANGELOG.md):** move items from **\[Unreleased]** into a new `## [x.y.z] - YYYY-MM-DD` section, and add the version link at the bottom (`[x.y.z]: https://github.com/CoderSerio/rush-fs/compare/vA.B.C...vx.y.z`).
+3. **Run Release:** push to `main`, then either **Actions → Release → Run workflow** or `git tag vx.y.z && git push origin vx.y.z`.

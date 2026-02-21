@@ -506,3 +506,14 @@ GitHub Actions 会在 push / PR 时自动执行：
 4. **Publish** — 版本 tag 触发自动发布到 npm
 
 本地开发只需关注 `pnpm build:debug` + `pnpm test`，CI 会处理跨平台验证。
+
+### 发布前/后检查（维护者）
+
+打新版本时（在运行 Release 工作流**之前**）：
+
+1. **升级版本号**（两处需一致）：
+   - `package.json` → `"version": "x.y.z"`
+   - `Cargo.toml` → `version = "x.y.z"`
+   - npm 不允许覆盖已发布版本；若上次发布半途失败但版本已上 npm（例如 0.0.4 已存在），需先改为新版本号（如 0.0.5）再重新发布。
+2. **更新 [CHANGELOG.md](CHANGELOG.md)**：将 **\[Unreleased]** 下的条目移到新的 `## [x.y.z] - YYYY-MM-DD` 小节，并在文末补充该版本的链接（`[x.y.z]: https://github.com/CoderSerio/rush-fs/compare/vA.B.C...vx.y.z`）。
+3. **执行发布**：推送到 `main` 后，在 **Actions → Release → Run workflow** 中运行，或执行 `git tag vx.y.z && git push origin vx.y.z`。
