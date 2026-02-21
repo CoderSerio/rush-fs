@@ -485,6 +485,17 @@ pnpm bench
 - **When you add or change an API**, add or update the corresponding file (e.g. `docs/content/api/readdir.mdx`) and register it in `docs/content/api/_meta.js`. Each API page must include: **Basic usage**, **Methods** (signatures and options), **Performance** (data from `pnpm bench`, in table form, at least vs Node.js `fs`), and **Notes** (known issues, tips). See `.cursor/rules/docs-conventions.mdc` for the full convention.
 - **Keep docs in sync**: If you change behavior or options, update the API doc and the README roadmap so the docs stay accurate.
 
+### Deploying the docs
+
+The docs are deployed with **Vercel’s built-in Git integration** (no custom CI):
+
+1. In [Vercel](https://vercel.com), import the GitHub repo.
+2. Set **Root Directory** to `docs` (the Next.js app lives there).
+3. Leave **Framework Preset** as Next.js; build/install commands are set in `docs/vercel.json` (pnpm).
+4. Deploy. Every push to the connected branch will trigger a new build and deploy; previews are created for PRs if enabled.
+
+To deploy elsewhere (e.g. Netlify, self-hosted), run `pnpm doc:build` and use the output in `docs/.next` (or run `pnpm doc:start` in a Node server). A custom CI job can run `pnpm doc:build` and upload artifacts if you need automation outside Vercel.
+
 ---
 
 ## CI
