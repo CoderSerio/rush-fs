@@ -6,7 +6,7 @@ All notable changes to Rush-FS are documented here. The format is based on [Keep
 
 - (Add new changes here before each release.)
 
-## [0.1.0-alpha.0] - (release date TBD)
+## [0.1.0-alpha.1] - (release date TBD)
 
 **This is an alpha release.** API and behavior may change before 0.1.0 stable. Feedback and issues are welcome.
 
@@ -36,8 +36,8 @@ All notable changes to Rush-FS are documented here. The format is based on [Keep
 
 ---
 
-[Unreleased]: https://github.com/CoderSerio/rush-fs/compare/v0.1.0-alpha.0...HEAD
-[0.1.0-alpha.0]: https://github.com/CoderSerio/rush-fs/compare/v0.0.5...v0.1.0-alpha.0
+[Unreleased]: https://github.com/CoderSerio/rush-fs/compare/v0.1.0-alpha.1...HEAD
+[0.1.0-alpha.1]: https://github.com/CoderSerio/rush-fs/compare/v0.0.5...v0.1.0-alpha.1
 [0.0.5]: https://github.com/CoderSerio/rush-fs/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/CoderSerio/rush-fs/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/CoderSerio/rush-fs/releases/tag/v0.0.3
