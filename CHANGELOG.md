@@ -8,18 +8,18 @@ All notable changes to Rush-FS are documented here. The format is based on [Keep
 
 ## [0.1.0] - (release date TBD)
 
-**This is an alpha release.** API and behavior may change before 0.1.0 stable. Feedback and issues are welcome.
+**This release is in beta.** API and behavior may change before 0.1.0 stable. Feedback and issues are welcome.
 
 ### Changed
 
 - **Package name:** The main npm package is now **`@rush-fs/core`** (scoped). Install with `pnpm add @rush-fs/core` or `npm i @rush-fs/core`, and import with `import { readdir, readFile, ... } from '@rush-fs/core'`.
 - **Migration from `rush-fs`:** If you were using the old unscoped package `rush-fs`, replace it with `@rush-fs/core` in `package.json` and in all imports. The API is unchanged; only the package name and version differ. The old `rush-fs` package may be deprecated on npm in a separate step; prefer `@rush-fs/core` for new installs.
 
-## [0.0.5] - (release date TBD)
+## [0.0.5]
 
 - Re-publish with `optionalDependencies` correctly injected after `napi prepublish`, so `pnpm i rush-fs` / `npm i rush-fs` auto-installs the platform native binding. No API or behavior changes from 0.0.4.
 
-## [0.0.4] - (release date TBD)
+## [0.0.4]
 
 ### Fixed
 

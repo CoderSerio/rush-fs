@@ -16,8 +16,6 @@
   API-aligned with Node.js <code>fs</code> for painless drop-in replacement in existing projects; get multi-fold performance in heavy file operations, powered by Rust.
 </p>
 
-<p align="center"><strong>⚠️ Alpha:</strong> The package is currently in <strong>alpha</strong>. API and behavior may change before 0.1.0 stable.</p>
-
 </div>
 
 ## Installation
@@ -141,7 +139,7 @@ Optimal concurrency for `cp` is **4 threads** on Apple Silicon — beyond that, 
 
 ## How it works
 
-For the original Node.js, it works serially and cost lots of memory to parse os object and string into JS style:
+For the original Node.js, **for example** on `readdir`, directory reads run serially in the native layer, and each entry is turned into a JS string on the V8 main thread, which adds GC pressure:
 
 ```mermaid
 graph TD
@@ -166,28 +164,30 @@ graph TD
     E -->|"Return Array"| G["JS Callback/Promise"]
 ```
 
-But, it's saved with Rust now:
+With Rush-FS, **for example** on `readdir`, the hot path stays in Rust: build a `Vec<String>` (or use Rayon for **recursive** readdir), then hand one array to JS. No per-entry V8 allocation during the walk:
 
 ```mermaid
 graph TD
     A["JS: readdir"] -->|"N-API Call"| B("Rust Wrapper")
-    B -->|"Spawn Thread/Task"| C{"Rust Thread Pool"}
+    B -->|"Spawn Task"| C{"Rust (or Rayon pool if recursive)"}
 
     subgraph "Rust 'Black Box'"
-    C -->|"Rayon: Parallel work"| D[OS Kernel]
-    D -->|"Syscall: getdents"| C
+    C -->|"Syscall: getdents"| D[OS Kernel]
+    D -->|"Return file list"| C
     C -->|"Store as Rust Vec<String>"| H[Rust Heap]
-    H -->|"No V8 Interaction yet"| H
+    H -->|"No V8 yet"| H
     end
 
     C -->|"All Done"| I("Convert to JS")
 
     subgraph "N-API Bridge"
-    I -->|"Batch Create JS Array"| J[V8 Heap]
+    I -->|"Batch create JS array"| J[V8 Heap]
     end
 
     J -->|Return| K["JS Result"]
 ```
+
+Other sources of speed in Rush-FS: **recursive `readdir`** uses [jwalk](https://github.com/Byron/jwalk) with a Rayon thread pool for parallel directory traversal; **`cp`** and **`rm`** (recursive) can use Rayon for parallel tree walk and I/O; **`glob`** runs with a configurable number of threads. Across APIs, keeping the hot path in Rust and handing a single result (or batched data) to JS avoids repeated V8/GC overhead compared to Node’s C++ binding.
 
 ## Status & Roadmap
 

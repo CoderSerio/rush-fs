@@ -140,53 +140,55 @@ Rush-FS 在文件系统遍历类操作中使用多线程并行：
 
 ## 工作原理
 
-Node.js 原生的 fs 在底层串行执行，且需要较多内存将系统对象与字符串解析为 JS 形式：
+以 **`readdir` 为例**：Node.js 在原生层串行执行目录读取，每条结果都在 V8 主线程上转成 JS 字符串，带来 GC 压力：
 
 ```mermaid
 graph TD
-    A["JS: readdir"] -->|Call| B("Node.js C++ Binding")
-    B -->|Submit Task| C{"Libuv Thread Pool"}
+    A["JS: readdir"] -->|调用| B("Node.js C++ 绑定")
+    B -->|提交任务| C{"Libuv 线程池"}
 
-    subgraph "Native Layer (Serial)"
-    C -->|"Syscall: getdents"| D[OS Kernel]
-    D -->|"Return File List"| C
-    C -->|"Process Paths"| C
+    subgraph "原生层（串行）"
+    C -->|"系统调用: getdents"| D[系统内核]
+    D -->|"返回文件列表"| C
+    C -->|"处理路径"| C
     end
 
-    C -->|"Results Ready"| E("V8 Main Thread")
+    C -->|"结果就绪"| E("V8 主线程")
 
-    subgraph "V8 Interaction (Heavy)"
-    E -->|"Create JS String 1"| F[V8 Heap]
-    E -->|"String 2"| F
-    E -->|"String N..."| F
-    F -->|"GC Pressure Rising"| F
+    subgraph "V8 交互（较重）"
+    E -->|"创建 JS 字符串 1"| F[V8 堆]
+    E -->|"字符串 2"| F
+    E -->|"字符串 N…"| F
+    F -->|"GC 压力上升"| F
     end
 
-    E -->|"Return Array"| G["JS Callback/Promise"]
+    E -->|"返回数组"| G["JS 回调/Promise"]
 ```
 
-Rust 实现则把重计算放在 Rust 侧，减少与 V8 的交互与 GC 压力：
+以 **`readdir` 为例**，Rush-FS 把热路径留在 Rust：先构建 `Vec<String>`（递归时用 Rayon 并行遍历），再一次性交给 JS，遍历过程中不逐条进 V8：
 
 ```mermaid
 graph TD
-    A["JS: readdir"] -->|"N-API Call"| B("Rust Wrapper")
-    B -->|"Spawn Thread/Task"| C{"Rust Thread Pool"}
+    A["JS: readdir"] -->|"N-API 调用"| B("Rust 封装")
+    B -->|"派发任务"| C{"Rust（递归时为 Rayon 线程池）"}
 
-    subgraph "Rust 'Black Box'"
-    C -->|"Rayon: Parallel work"| D[OS Kernel]
-    D -->|"Syscall: getdents"| C
-    C -->|"Store as Rust Vec<String>"| H[Rust Heap]
-    H -->|"No V8 Interaction yet"| H
+    subgraph "Rust「黑盒」"
+    C -->|"系统调用: getdents"| D[系统内核]
+    D -->|"返回文件列表"| C
+    C -->|"存入 Rust Vec<String>"| H[Rust 堆]
+    H -->|"尚未进 V8"| H
     end
 
-    C -->|"All Done"| I("Convert to JS")
+    C -->|"全部完成"| I("转为 JS")
 
-    subgraph "N-API Bridge"
-    I -->|"Batch Create JS Array"| J[V8 Heap]
+    subgraph "N-API 桥"
+    I -->|"批量创建 JS 数组"| J[V8 堆]
     end
 
-    J -->|Return| K["JS Result"]
+    J -->|返回| K["JS 结果"]
 ```
+
+其它提效来源：**递归 `readdir`** 使用 [jwalk](https://github.com/Byron/jwalk) + Rayon 并行遍历目录；**`cp`**、**`rm`**（递归）可通过 Rayon 并行遍历目录树并做 I/O；**`glob`** 支持多线程。整体上，热路径在 Rust、结果一次性（或批量）交给 JS，相比 Node 的 C++ binding 减少了反复进出 V8 与 GC 的开销。
 
 ## 状态与路线图
 
