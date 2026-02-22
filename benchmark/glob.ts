@@ -1,4 +1,6 @@
 import { run, bench, group } from 'mitata'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import { globSync as hyperGlobSync } from '../index.js'
 import { globSync as nodeGlobSync } from 'glob'
 import fastGlob from 'fast-glob'
@@ -26,11 +28,9 @@ group('Glob (Recursive: **/*.rs)', () => {
   bench('rush-fs', () => hyperGlobSync(patternRecursive, { cwd })).baseline()
 })
 
-// 3. Deep Recursive (if node_modules exists)
-// This is a stress test
-group('Glob (Deep: node_modules/**/*.json)', () => {
-  // Only run if node_modules exists to avoid empty result bias
-  const hasNodeModules = fastGlob.sync('node_modules').length > 0
+// 3. Large tree (same scale as readdir: node_modules ~30k entries) — validates parallel glob advantage
+group('Glob (Large tree: node_modules/**/*.json)', () => {
+  const hasNodeModules = fs.existsSync(path.join(cwd, 'node_modules'))
   if (hasNodeModules) {
     bench('node-glob', () => nodeGlobSync(patternDeep, { cwd }))
     bench('fast-glob', () => fastGlob.sync(patternDeep, { cwd }))

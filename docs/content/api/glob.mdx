@@ -30,14 +30,15 @@ const entries = await glob('**/*.rs', { cwd: './crate', withFileTypes: true, con
 
 ## Performance
 
-From repo benchmarks (`pnpm build && pnpm bench`):
+From repo benchmarks (`pnpm build && pnpm bench glob`), Apple Silicon, Node 24, release build:
 
-| Scenario                  | Node.js (glob) | Rush-FS | Speedup |
-| ------------------------- | -------------- | ------- | ------- |
-| glob recursive `**/*.rs`  | 25 ms          | 1.46 ms | **17x** |
-| glob recursive vs fast-glob | 102 ms       | 1.46 ms | **70x** |
+| Scenario | Baseline | Rush-FS | Note |
+| -------- | -------- | ------- | ---- |
+| Large tree `node_modules/**/*.json` (~30k entries) | fast-glob 303 ms | 30 ms | **~10x** faster |
+| Recursive `**/*.rs` (small/medium tree) | node-glob 22 ms | 40 ms | node-glob faster at this scale |
+| Simple `src/*.rs` | node-glob 46 µs | 1.5 ms | Rush-FS has fixed startup cost; use for large trees |
 
-Rush-FS is much faster for recursive glob; tune `concurrency` for large trees.
+Rush-FS excels at **large, deep trees** (e.g. node_modules); tune `concurrency` for very large directories.
 
 ## Notes
 

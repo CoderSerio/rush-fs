@@ -8,16 +8,13 @@
   <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
   <img src="https://img.shields.io/npm/v/@rush-fs/core?style=flat-square" alt="NPM Version">
   <img src="https://img.shields.io/npm/l/@rush-fs/core?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/status-alpha-orange?style=flat-square" alt="Alpha">
+  <img src="https://img.shields.io/badge/status-beta-orange?style=flat-square" alt="Beta">
   <a href="https://github.com/CoderSerio/rush-fs/graphs/contributors"><img src="https://img.shields.io/github/contributors/CoderSerio/rush-fs?style=flat-square" alt="Contributors"></a>
 </p>
 
 <p align="center">
   与 Node.js <code>fs</code> API 对齐，可无痛替换现有项目中的 fs；在海量文件操作场景下获得数倍于内置 fs 的性能，由 Rust 驱动。
 </p>
-
-<p align="center"><strong>⚠️ Alpha：</strong>当前为 <strong>alpha</strong> 版本，在 0.1.0 正式版前 API 与行为可能变更。</p>
-</div>
 
 ## 安装
 
@@ -36,7 +33,7 @@ pnpm add @rush-fs/core
    **Windows x64：** `pnpm add @rush-fs/rush-fs-win32-x64-msvc`  
    **Linux x64 (glibc)：** `pnpm add @rush-fs/rush-fs-linux-x64-gnu`
 
-**从 `rush-fs` 迁移：** 自 0.1.0-alpha 起主包更名为 `@rush-fs/core`，详见 [CHANGELOG.md](./CHANGELOG.md#010-alpha0)。
+**从 `rush-fs` 迁移：** 主包更名为 `@rush-fs/core`，详见 [CHANGELOG.md](./CHANGELOG.md#010)。
 
 ## 用法
 
@@ -76,30 +73,30 @@ await rm('./temp', { recursive: true, force: true })
 
 这些场景中 Rust 的并行遍历和零拷贝 I/O 发挥了真正优势：
 
-| 场景                                        | Node.js   | Rush-FS  | 加速比    |
-| ------------------------------------------- | --------- | -------- | --------- |
-| `readdir` 递归（node_modules，约 3 万条目） | 281 ms    | 23 ms    | **12x**   |
-| `glob` 递归（`**/*.rs`）                    | 25 ms     | 1.46 ms  | **17x**   |
-| `glob` 递归 vs fast-glob                    | 102 ms    | 1.46 ms  | **70x**   |
-| `copyFile` 4 MB                             | 4.67 ms   | 0.09 ms  | **50x**   |
-| `readFile` 4 MB utf8                        | 1.86 ms   | 0.92 ms  | **2x**    |
-| `readFile` 64 KB utf8                       | 42 µs     | 18 µs    | **2.4x**  |
-| `rm` 2000 个文件（4 线程）                  | 92 ms     | 53 ms    | **1.75x** |
-| `access` R_OK（目录）                       | 4.18 µs   | 1.55 µs  | **2.7x**  |
-| `cp` 500 文件平铺目录（4 线程）             | 86.45 ms  | 32.88 ms | **2.6x**  |
-| `cp` 树形目录 ~363 节点（4 线程）           | 108.73 ms | 46.88 ms | **2.3x**  |
+| 场景                                                             | Node.js   | Rush-FS  | 加速比    |
+| ---------------------------------------------------------------- | --------- | -------- | --------- |
+| `readdir` 递归（node_modules，约 3 万条目）                      | 281 ms    | 23 ms    | **12x**   |
+| `copyFile` 4 MB                                                  | 4.67 ms   | 0.09 ms  | **50x**   |
+| `readFile` 4 MB utf8                                             | 1.86 ms   | 0.92 ms  | **2x**    |
+| `readFile` 64 KB utf8                                            | 42 µs     | 18 µs    | **2.4x**  |
+| `rm` 2000 个文件（4 线程）                                       | 92 ms     | 53 ms    | **1.75x** |
+| `access` R_OK（目录）                                            | 4.18 µs   | 1.55 µs  | **2.7x**  |
+| `cp` 500 文件平铺目录（4 线程）                                  | 86.45 ms  | 32.88 ms | **2.6x**  |
+| `cp` 树形目录 ~363 节点（4 线程）                                | 108.73 ms | 46.88 ms | **2.3x**  |
+| `glob` 大树（`node_modules/**/*.json`，约 3 万条目）vs fast-glob | 303 ms    | 30 ms    | **~10x**  |
 
 ### 与 Node.js 持平的场景
 
-单文件操作有约 0.3 µs 的 napi 桥接开销，整体表现基本一致：
+单文件操作有约 0.3 µs 的 napi 桥接开销。递归 glob 在**小树**上与 node-glob 持平，在**大树**（如 node_modules）上 Rush-FS 明显更快（见上表）。
 
-| 场景                         | Node.js | Rush-FS | 比率 |
-| ---------------------------- | ------- | ------- | ---- |
-| `stat`（单文件）             | 1.45 µs | 1.77 µs | 1.2x |
-| `readFile` 小文件（Buffer）  | 8.86 µs | 9.46 µs | 1.1x |
-| `writeFile` 小文件（string） | 74 µs   | 66 µs   | 0.9x |
-| `writeFile` 小文件（Buffer） | 115 µs  | 103 µs  | 0.9x |
-| `appendFile`                 | 30 µs   | 27 µs   | 0.9x |
+| 场景                                       | Node.js | Rush-FS | 比率                             |
+| ------------------------------------------ | ------- | ------- | -------------------------------- |
+| `stat`（单文件）                           | 1.45 µs | 1.77 µs | 1.2x                             |
+| `readFile` 小文件（Buffer）                | 8.86 µs | 9.46 µs | 1.1x                             |
+| `writeFile` 小文件（string）               | 74 µs   | 66 µs   | 0.9x                             |
+| `writeFile` 小文件（Buffer）               | 115 µs  | 103 µs  | 0.9x                             |
+| `appendFile`                               | 30 µs   | 27 µs   | 0.9x                             |
+| `glob` 递归（`**/*.rs`，小树）vs node-glob | ~22 ms  | ~40 ms  | ~1.8x（此规模下 node-glob 更快） |
 
 ### Node.js 更快的场景
 
@@ -126,7 +123,7 @@ Rush-FS 在文件系统遍历类操作中使用多线程并行：
 
 ### 核心结论
 
-**Rush-FS 在递归/批量文件系统操作上表现卓越**（readdir、glob、rm、cp），Rust 的并行遍历器带来 2–70 倍加速。单文件操作与 Node.js 基本持平。napi 桥接带来固定约 0.3 µs 的每次调用开销，仅在亚微秒级操作（如 `existsSync`）中有感知。
+**Rush-FS 在递归/批量文件系统操作上表现卓越**（readdir、glob、rm、cp），Rust 的并行遍历器带来多倍加速（如 readdir 12x、copyFile 50x）。单文件操作与 Node.js 基本持平。napi 桥接带来固定约 0.3 µs 的每次调用开销，仅在亚微秒级操作（如 `existsSync`）中有感知。
 
 **`cp` 基准详情**（Apple Silicon，release 构建）：
 
@@ -447,7 +444,7 @@ graph TD
     withFileTypes?: boolean; // ✅
     exclude?: string[]; // ✅
     concurrency?: number; // ✨
-    gitIgnore?: boolean; // ✨
+    gitIgnore?: boolean; // ✨ 默认 false，与 Node.js fs.globSync 一致
   };
   ```
 

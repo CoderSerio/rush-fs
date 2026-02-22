@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
   <img src="https://img.shields.io/npm/v/@rush-fs/core?style=flat-square" alt="NPM Version">
   <img src="https://img.shields.io/npm/l/@rush-fs/core?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/status-alpha-orange?style=flat-square" alt="Alpha">
+  <img src="https://img.shields.io/badge/status-beta-orange?style=flat-square" alt="Beta">
   <a href="https://github.com/CoderSerio/rush-fs/graphs/contributors"><img src="https://img.shields.io/github/contributors/CoderSerio/rush-fs?style=flat-square" alt="Contributors"></a>
 </p>
 
@@ -35,7 +35,7 @@ When you install `@rush-fs/core`, the package manager should automatically insta
    **Windows x64:** `pnpm add @rush-fs/rush-fs-win32-x64-msvc`  
    **Linux x64 (glibc):** `pnpm add @rush-fs/rush-fs-linux-x64-gnu`
 
-**Migration from `rush-fs`:** The package was renamed to `@rush-fs/core`. See [CHANGELOG.md](./CHANGELOG.md#010-alpha0) for details.
+**Migration from `rush-fs`:** The package was renamed to `@rush-fs/core`. See [CHANGELOG.md](./CHANGELOG.md#010) for details.
 
 ## Usage
 
@@ -75,30 +75,30 @@ await rm('./temp', { recursive: true, force: true })
 
 These are the scenarios where Rust's parallelism and zero-copy I/O make a real difference:
 
-| Scenario                                         | Node.js   | Rush-FS  | Speedup   |
-| ------------------------------------------------ | --------- | -------- | --------- |
-| `readdir` recursive (node_modules, ~30k entries) | 281 ms    | 23 ms    | **12x**   |
-| `glob` recursive (`**/*.rs`)                     | 25 ms     | 1.46 ms  | **17x**   |
-| `glob` recursive vs fast-glob                    | 102 ms    | 1.46 ms  | **70x**   |
-| `copyFile` 4 MB                                  | 4.67 ms   | 0.09 ms  | **50x**   |
-| `readFile` 4 MB utf8                             | 1.86 ms   | 0.92 ms  | **2x**    |
-| `readFile` 64 KB utf8                            | 42 µs     | 18 µs    | **2.4x**  |
-| `rm` 2000 files (4 threads)                      | 92 ms     | 53 ms    | **1.75x** |
-| `access` R_OK (directory)                        | 4.18 µs   | 1.55 µs  | **2.7x**  |
-| `cp` 500-file flat dir (4 threads)               | 86.45 ms  | 32.88 ms | **2.6x**  |
-| `cp` tree dir ~363 nodes (4 threads)             | 108.73 ms | 46.88 ms | **2.3x**  |
+| Scenario                                                                | Node.js   | Rush-FS  | Speedup   |
+| ----------------------------------------------------------------------- | --------- | -------- | --------- |
+| `readdir` recursive (node_modules, ~30k entries)                        | 281 ms    | 23 ms    | **12x**   |
+| `copyFile` 4 MB                                                         | 4.67 ms   | 0.09 ms  | **50x**   |
+| `readFile` 4 MB utf8                                                    | 1.86 ms   | 0.92 ms  | **2x**    |
+| `readFile` 64 KB utf8                                                   | 42 µs     | 18 µs    | **2.4x**  |
+| `rm` 2000 files (4 threads)                                             | 92 ms     | 53 ms    | **1.75x** |
+| `access` R_OK (directory)                                               | 4.18 µs   | 1.55 µs  | **2.7x**  |
+| `cp` 500-file flat dir (4 threads)                                      | 86.45 ms  | 32.88 ms | **2.6x**  |
+| `cp` tree dir ~363 nodes (4 threads)                                    | 108.73 ms | 46.88 ms | **2.3x**  |
+| `glob` large tree (`node_modules/**/*.json`, ~30k entries) vs fast-glob | 303 ms    | 30 ms    | **~10x**  |
 
 ### On Par with Node.js
 
-Single-file operations have a ~0.3 µs napi bridge overhead, making them roughly equivalent:
+Single-file operations have a ~0.3 µs napi bridge overhead. Recursive glob on a **small tree** is on par with node-glob; on **large trees** (e.g. node_modules) Rush-FS wins (see table above).
 
-| Scenario                   | Node.js | Rush-FS | Ratio |
-| -------------------------- | ------- | ------- | ----- |
-| `stat` (single file)       | 1.45 µs | 1.77 µs | 1.2x  |
-| `readFile` small (Buffer)  | 8.86 µs | 9.46 µs | 1.1x  |
-| `writeFile` small (string) | 74 µs   | 66 µs   | 0.9x  |
-| `writeFile` small (Buffer) | 115 µs  | 103 µs  | 0.9x  |
-| `appendFile`               | 30 µs   | 27 µs   | 0.9x  |
+| Scenario                                              | Node.js | Rush-FS | Ratio                                  |
+| ----------------------------------------------------- | ------- | ------- | -------------------------------------- |
+| `stat` (single file)                                  | 1.45 µs | 1.77 µs | 1.2x                                   |
+| `readFile` small (Buffer)                             | 8.86 µs | 9.46 µs | 1.1x                                   |
+| `writeFile` small (string)                            | 74 µs   | 66 µs   | 0.9x                                   |
+| `writeFile` small (Buffer)                            | 115 µs  | 103 µs  | 0.9x                                   |
+| `appendFile`                                          | 30 µs   | 27 µs   | 0.9x                                   |
+| `glob` recursive (`**/*.rs`, small tree) vs node-glob | ~22 ms  | ~40 ms  | ~1.8x (node-glob faster at this scale) |
 
 ### Where Node.js Wins
 
@@ -125,7 +125,7 @@ Single-file operations (`stat`, `readFile`, `writeFile`, `chmod`, etc.) are atom
 
 ### Key Takeaway
 
-**Rush-FS excels at recursive / batch filesystem operations** (readdir, glob, rm, cp) where Rust's parallel walkers deliver 2–70x speedups. For single-file operations it performs on par with Node.js. The napi bridge adds a fixed ~0.3 µs overhead per call, which only matters for sub-microsecond operations like `existsSync`.
+**Rush-FS excels at recursive / batch filesystem operations** (readdir, glob, rm, cp) where Rust's parallel walkers deliver significant speedups (e.g. 12x readdir, 50x copyFile). For single-file operations it performs on par with Node.js. The napi bridge adds a fixed ~0.3 µs overhead per call, which only matters for sub-microsecond operations like `existsSync`.
 
 **`cp` benchmark detail** (Apple Silicon, release build):
 
@@ -446,7 +446,7 @@ We are rewriting `fs` APIs one by one.
     withFileTypes?: boolean; // ✅
     exclude?: string[]; // ✅
     concurrency?: number; // ✨
-    gitIgnore?: boolean; // ✨
+    gitIgnore?: boolean; // ✨ default false (align with Node.js fs.globSync)
   };
   ```
 
