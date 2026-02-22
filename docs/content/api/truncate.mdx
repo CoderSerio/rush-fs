@@ -5,7 +5,7 @@ Truncate or extend a file to the given length. If the file is longer, extra byte
 ## Basic usage
 
 ```ts
-import { truncate } from 'rush-fs'
+import { truncate } from '@rush-fs/core'
 
 await truncate('./file.txt', 100) // trim or extend to 100 bytes
 await truncate('./file.txt')      // truncate to 0

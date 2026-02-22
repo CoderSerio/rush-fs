@@ -5,7 +5,7 @@ Resolve the canonical absolute path for a path, resolving `.`, `..`, and symlink
 ## Basic usage
 
 ```ts
-import { realpath } from 'rush-fs'
+import { realpath } from '@rush-fs/core'
 
 const abs = await realpath('./some/relative/path')
 console.log(abs) // e.g. /home/user/proj/some/relative/path

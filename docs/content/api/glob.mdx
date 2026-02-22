@@ -5,7 +5,7 @@ Match files and directories by glob pattern (e.g. `**/*.js`). Supports **concurr
 ## Basic usage
 
 ```ts
-import { glob } from 'rush-fs'
+import { glob } from '@rush-fs/core'
 
 const files = await glob('**/*.ts', { cwd: './src' })
 const entries = await glob('**/*.rs', { cwd: './crate', withFileTypes: true, concurrency: 4, gitIgnore: true })
@@ -30,14 +30,15 @@ const entries = await glob('**/*.rs', { cwd: './crate', withFileTypes: true, con
 
 ## Performance
 
-From repo benchmarks (`pnpm build && pnpm bench`):
+From repo benchmarks (`pnpm build && pnpm bench glob`), Apple Silicon, Node 24, release build:
 
-| Scenario                  | Node.js (glob) | Rush-FS | Speedup |
-| ------------------------- | -------------- | ------- | ------- |
-| glob recursive `**/*.rs`  | 25 ms          | 1.46 ms | **17x** |
-| glob recursive vs fast-glob | 102 ms       | 1.46 ms | **70x** |
+| Scenario | Baseline | Rush-FS | Note |
+| -------- | -------- | ------- | ---- |
+| Large tree `node_modules/**/*.json` (~30k entries) | fast-glob 303 ms | 30 ms | **~10x** faster |
+| Recursive `**/*.rs` (small/medium tree) | node-glob 22 ms | 40 ms | node-glob faster at this scale |
+| Simple `src/*.rs` | node-glob 46 µs | 1.5 ms | Rush-FS has fixed startup cost; use for large trees |
 
-Rush-FS is much faster for recursive glob; tune `concurrency` for large trees.
+Rush-FS excels at **large, deep trees** (e.g. node_modules); tune `concurrency` for very large directories.
 
 ## Notes
 

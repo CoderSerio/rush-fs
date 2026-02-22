@@ -6,8 +6,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
-  <img src="https://img.shields.io/npm/v/rush-fs?style=flat-square" alt="NPM Version">
-  <img src="https://img.shields.io/npm/l/rush-fs?style=flat-square" alt="License">
+  <img src="https://img.shields.io/npm/v/@rush-fs/core?style=flat-square" alt="NPM Version">
+  <img src="https://img.shields.io/npm/l/@rush-fs/core?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/status-beta-orange?style=flat-square" alt="Beta">
   <a href="https://github.com/CoderSerio/rush-fs/graphs/contributors"><img src="https://img.shields.io/github/contributors/CoderSerio/rush-fs?style=flat-square" alt="Contributors"></a>
 </p>
 
@@ -20,12 +21,12 @@
 ## Installation
 
 ```bash
-npm install rush-fs
+npm install @rush-fs/core
 # or
-pnpm add rush-fs
+pnpm add @rush-fs/core
 ```
 
-When you install `rush-fs`, the package manager should automatically install the **platform-specific native binding** for your OS/arch via `optionalDependencies` (e.g. `@rush-fs/rush-fs-darwin-arm64` on macOS ARM). If the native binding is missing and you see "Cannot find native binding", try:
+When you install `@rush-fs/core`, the package manager should automatically install the **platform-specific native binding** for your OS/arch via `optionalDependencies` (e.g. `@rush-fs/rush-fs-darwin-arm64` on macOS ARM). If the native binding is missing and you see "Cannot find native binding", try:
 
 1. Remove `node_modules` and the lockfile (`package-lock.json` or `pnpm-lock.yaml`), then run `pnpm install` (or `npm i`) again.
 2. Or install the platform package explicitly:  
@@ -34,10 +35,12 @@ When you install `rush-fs`, the package manager should automatically install the
    **Windows x64:** `pnpm add @rush-fs/rush-fs-win32-x64-msvc`  
    **Linux x64 (glibc):** `pnpm add @rush-fs/rush-fs-linux-x64-gnu`
 
+**Migration from `rush-fs`:** The package was renamed to `@rush-fs/core`. See [CHANGELOG.md](./CHANGELOG.md#010) for details.
+
 ## Usage
 
 ```ts
-import { readdir, stat, readFile, writeFile, mkdir, rm } from 'rush-fs'
+import { readdir, stat, readFile, writeFile, mkdir, rm } from '@rush-fs/core'
 
 // Read directory
 const files = await readdir('./src')
@@ -72,30 +75,30 @@ await rm('./temp', { recursive: true, force: true })
 
 These are the scenarios where Rust's parallelism and zero-copy I/O make a real difference:
 
-| Scenario                                         | Node.js   | Rush-FS  | Speedup   |
-| ------------------------------------------------ | --------- | -------- | --------- |
-| `readdir` recursive (node_modules, ~30k entries) | 281 ms    | 23 ms    | **12x**   |
-| `glob` recursive (`**/*.rs`)                     | 25 ms     | 1.46 ms  | **17x**   |
-| `glob` recursive vs fast-glob                    | 102 ms    | 1.46 ms  | **70x**   |
-| `copyFile` 4 MB                                  | 4.67 ms   | 0.09 ms  | **50x**   |
-| `readFile` 4 MB utf8                             | 1.86 ms   | 0.92 ms  | **2x**    |
-| `readFile` 64 KB utf8                            | 42 µs     | 18 µs    | **2.4x**  |
-| `rm` 2000 files (4 threads)                      | 92 ms     | 53 ms    | **1.75x** |
-| `access` R_OK (directory)                        | 4.18 µs   | 1.55 µs  | **2.7x**  |
-| `cp` 500-file flat dir (4 threads)               | 86.45 ms  | 32.88 ms | **2.6x**  |
-| `cp` tree dir ~363 nodes (4 threads)             | 108.73 ms | 46.88 ms | **2.3x**  |
+| Scenario                                                                | Node.js   | Rush-FS  | Speedup   |
+| ----------------------------------------------------------------------- | --------- | -------- | --------- |
+| `readdir` recursive (node_modules, ~30k entries)                        | 281 ms    | 23 ms    | **12x**   |
+| `copyFile` 4 MB                                                         | 4.67 ms   | 0.09 ms  | **50x**   |
+| `readFile` 4 MB utf8                                                    | 1.86 ms   | 0.92 ms  | **2x**    |
+| `readFile` 64 KB utf8                                                   | 42 µs     | 18 µs    | **2.4x**  |
+| `rm` 2000 files (4 threads)                                             | 92 ms     | 53 ms    | **1.75x** |
+| `access` R_OK (directory)                                               | 4.18 µs   | 1.55 µs  | **2.7x**  |
+| `cp` 500-file flat dir (4 threads)                                      | 86.45 ms  | 32.88 ms | **2.6x**  |
+| `cp` tree dir ~363 nodes (4 threads)                                    | 108.73 ms | 46.88 ms | **2.3x**  |
+| `glob` large tree (`node_modules/**/*.json`, ~30k entries) vs fast-glob | 303 ms    | 30 ms    | **~10x**  |
 
 ### On Par with Node.js
 
-Single-file operations have a ~0.3 µs napi bridge overhead, making them roughly equivalent:
+Single-file operations have a ~0.3 µs napi bridge overhead. Recursive glob on a **small tree** is on par with node-glob; on **large trees** (e.g. node_modules) Rush-FS wins (see table above).
 
-| Scenario                   | Node.js | Rush-FS | Ratio |
-| -------------------------- | ------- | ------- | ----- |
-| `stat` (single file)       | 1.45 µs | 1.77 µs | 1.2x  |
-| `readFile` small (Buffer)  | 8.86 µs | 9.46 µs | 1.1x  |
-| `writeFile` small (string) | 74 µs   | 66 µs   | 0.9x  |
-| `writeFile` small (Buffer) | 115 µs  | 103 µs  | 0.9x  |
-| `appendFile`               | 30 µs   | 27 µs   | 0.9x  |
+| Scenario                                              | Node.js | Rush-FS | Ratio                                  |
+| ----------------------------------------------------- | ------- | ------- | -------------------------------------- |
+| `stat` (single file)                                  | 1.45 µs | 1.77 µs | 1.2x                                   |
+| `readFile` small (Buffer)                             | 8.86 µs | 9.46 µs | 1.1x                                   |
+| `writeFile` small (string)                            | 74 µs   | 66 µs   | 0.9x                                   |
+| `writeFile` small (Buffer)                            | 115 µs  | 103 µs  | 0.9x                                   |
+| `appendFile`                                          | 30 µs   | 27 µs   | 0.9x                                   |
+| `glob` recursive (`**/*.rs`, small tree) vs node-glob | ~22 ms  | ~40 ms  | ~1.8x (node-glob faster at this scale) |
 
 ### Where Node.js Wins
 
@@ -122,7 +125,7 @@ Single-file operations (`stat`, `readFile`, `writeFile`, `chmod`, etc.) are atom
 
 ### Key Takeaway
 
-**Rush-FS excels at recursive / batch filesystem operations** (readdir, glob, rm, cp) where Rust's parallel walkers deliver 2–70x speedups. For single-file operations it performs on par with Node.js. The napi bridge adds a fixed ~0.3 µs overhead per call, which only matters for sub-microsecond operations like `existsSync`.
+**Rush-FS excels at recursive / batch filesystem operations** (readdir, glob, rm, cp) where Rust's parallel walkers deliver significant speedups (e.g. 12x readdir, 50x copyFile). For single-file operations it performs on par with Node.js. The napi bridge adds a fixed ~0.3 µs overhead per call, which only matters for sub-microsecond operations like `existsSync`.
 
 **`cp` benchmark detail** (Apple Silicon, release build):
 
@@ -136,7 +139,7 @@ Optimal concurrency for `cp` is **4 threads** on Apple Silicon — beyond that, 
 
 ## How it works
 
-For the original Node.js, it works serially and cost lots of memory to parse os object and string into JS style:
+For the original Node.js, **for example** on `readdir`, directory reads run serially in the native layer, and each entry is turned into a JS string on the V8 main thread, which adds GC pressure:
 
 ```mermaid
 graph TD
@@ -161,28 +164,30 @@ graph TD
     E -->|"Return Array"| G["JS Callback/Promise"]
 ```
 
-But, it's saved with Rust now:
+With Rush-FS, **for example** on `readdir`, the hot path stays in Rust: build a `Vec<String>` (or use Rayon for **recursive** readdir), then hand one array to JS. No per-entry V8 allocation during the walk:
 
 ```mermaid
 graph TD
     A["JS: readdir"] -->|"N-API Call"| B("Rust Wrapper")
-    B -->|"Spawn Thread/Task"| C{"Rust Thread Pool"}
+    B -->|"Spawn Task"| C{"Rust (or Rayon pool if recursive)"}
 
     subgraph "Rust 'Black Box'"
-    C -->|"Rayon: Parallel work"| D[OS Kernel]
-    D -->|"Syscall: getdents"| C
+    C -->|"Syscall: getdents"| D[OS Kernel]
+    D -->|"Return file list"| C
     C -->|"Store as Rust Vec<String>"| H[Rust Heap]
-    H -->|"No V8 Interaction yet"| H
+    H -->|"No V8 yet"| H
     end
 
     C -->|"All Done"| I("Convert to JS")
 
     subgraph "N-API Bridge"
-    I -->|"Batch Create JS Array"| J[V8 Heap]
+    I -->|"Batch create JS array"| J[V8 Heap]
     end
 
     J -->|Return| K["JS Result"]
 ```
+
+Other sources of speed in Rush-FS: **recursive `readdir`** uses [jwalk](https://github.com/Byron/jwalk) with a Rayon thread pool for parallel directory traversal; **`cp`** and **`rm`** (recursive) can use Rayon for parallel tree walk and I/O; **`glob`** runs with a configurable number of threads. Across APIs, keeping the hot path in Rust and handing a single result (or batched data) to JS avoids repeated V8/GC overhead compared to Node’s C++ binding.
 
 ## Status & Roadmap
 
@@ -192,7 +197,7 @@ We are rewriting `fs` APIs one by one.
 >
 > - ✅: Fully Supported
 > - 🚧: Partially Supported / WIP
-> - ✨: New feature from rush-fs
+> - ✨: New feature from @rush-fs/core
 > - ❌: Not Supported Yet
 
 ### `readdir`
@@ -441,7 +446,7 @@ We are rewriting `fs` APIs one by one.
     withFileTypes?: boolean; // ✅
     exclude?: string[]; // ✅
     concurrency?: number; // ✨
-    gitIgnore?: boolean; // ✨
+    gitIgnore?: boolean; // ✨ default false (align with Node.js fs.globSync)
   };
   ```
 

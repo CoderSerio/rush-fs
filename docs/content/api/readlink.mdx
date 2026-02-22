@@ -5,7 +5,7 @@ Read the target path of a symbolic link. Fails for non-symlinks.
 ## Basic usage
 
 ```ts
-import { readlink } from 'rush-fs'
+import { readlink } from '@rush-fs/core'
 
 const target = await readlink('./mylink')
 console.log(target) // resolved target path

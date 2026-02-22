@@ -5,7 +5,7 @@ Get file/directory metadata. Follows symlinks; use `lstat` to inspect the link i
 ## Basic usage
 
 ```ts
-import { stat } from 'rush-fs'
+import { stat } from '@rush-fs/core'
 
 const s = await stat('./package.json')
 console.log(s.size, s.isFile(), s.isDirectory())

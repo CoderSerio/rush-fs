@@ -5,7 +5,7 @@ Create a symbolic link at `path` pointing to `target`. On Windows, `type` can be
 ## Basic usage
 
 ```ts
-import { symlink } from 'rush-fs'
+import { symlink } from '@rush-fs/core'
 
 await symlink('./target.txt', './link.txt')
 await symlink('./target-dir', './link-dir', 'dir') // Windows: directory symlink

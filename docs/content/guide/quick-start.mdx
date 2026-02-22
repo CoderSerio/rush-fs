@@ -3,17 +3,17 @@
 ## Install
 
 ```bash
-npm install rush-fs
+npm install @rush-fs/core
 # or
-pnpm add rush-fs
+pnpm add @rush-fs/core
 ```
 
 ## Use
 
-Import the APIs you need from `rush-fs` — same names as `node:fs`:
+Import the APIs you need from `@rush-fs/core` — same names as `node:fs`:
 
 ```ts
-import { readdir, stat, readFile, writeFile, mkdir, rm } from 'rush-fs'
+import { readdir, stat, readFile, writeFile, mkdir, rm } from '@rush-fs/core'
 
 // Read directory
 const files = await readdir('./src')

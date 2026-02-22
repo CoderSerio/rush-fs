@@ -17,7 +17,7 @@ For more detail and diagrams, see the [README — How it works](https://github.c
 ## Quick example
 
 ```ts
-import { readdir, readFile, writeFile, rm } from 'rush-fs'
+import { readdir, readFile, writeFile, rm } from '@rush-fs/core'
 
 const files = await readdir('./src', { recursive: true, withFileTypes: true })
 const content = await readFile('./package.json', { encoding: 'utf8' })

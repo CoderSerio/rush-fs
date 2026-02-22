@@ -3,15 +3,33 @@ use crate::utils::get_file_type_id;
 use ignore::{overrides::OverrideBuilder, WalkBuilder};
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-// ignore crate 会对文件按 override 白名单过滤，但目录无论是否匹配都会被遍历（以便
-// 递归进去找匹配的子条目）。因此目录需要单独用 dir_matcher 测试其路径是否符合模式，
-// 只有匹配的目录才加入结果——这与 Node.js fs.globSync 的行为一致：
-//   - "src/*"   → 返回 src/ 下的文件 AND 子目录
-//   - "**/*.rs" → 只返回 .rs 文件（目录不含 .rs 扩展名，不会匹配）
-//   - "**"      → 返回所有文件和目录（但不含 cwd 根节点自身）
+/// Extract leading path prefix from pattern so we can walk from that directory.
+/// e.g. ".rush-fs-glob-check/**/*.txt" -> (".rush-fs-glob-check", "**/*.txt")
+///      "**/*.txt" -> None (no prefix)
+/// This aligns with Node.js: pattern with path prefix uses that path as the search root.
+/// We scan for the first of * ? [ so that patterns like "dir?/sub/**/*.ts" use "dir?" as prefix
+/// (no literal dir? on disk) rather than "dir?/sub", which would wrongly be used as walk root.
+fn extract_path_prefix(pattern: &str) -> Option<(String, String)> {
+  let first_glob = pattern.find(['*', '?', '['])?;
+  let prefix = pattern[..first_glob]
+    .trim_end_matches('/')
+    .trim_end_matches(std::path::MAIN_SEPARATOR);
+  if prefix.is_empty() || prefix == "." {
+    return None;
+  }
+  Some((prefix.to_string(), pattern[first_glob..].to_string()))
+}
+
+// The ignore crate filters files by override whitelist; directories are always traversed
+// (so we can recurse to find matching children). We use dir_matcher to test whether a
+// directory path itself matches the pattern; only matching directories are included in
+// results — aligned with Node.js fs.globSync:
+//   - "src/*"   → returns files AND subdirs under src/
+//   - "**/*.rs" → returns only .rs files (dirs don't match)
+//   - "**"      → returns all files and dirs (excluding the cwd root itself)
 
 #[napi(object)]
 #[derive(Clone)]
@@ -37,14 +55,28 @@ pub fn glob_sync(
   });
 
   let cwd = opts.cwd.unwrap_or_else(|| ".".to_string());
+  let cwd_path = Path::new(&cwd).to_path_buf();
   let with_file_types = opts.with_file_types.unwrap_or(false);
   let concurrency = opts.concurrency.unwrap_or(4) as usize;
 
-  // 构建 override（白名单模式）：ignore crate 利用它来过滤文件；
-  // 同时保留一份 dir_matcher 副本，用于判断目录自身是否匹配模式。
-  let mut override_builder = OverrideBuilder::new(&cwd);
+  // When pattern has a path prefix (e.g. "dir/**/*.txt" or ".hidden/**/*.txt"), use that as the
+  // walk root so we descend into it (fixes hidden dirs and matches Node.js behavior).
+  let (walk_root, pattern_for_override, result_prefix) = match extract_path_prefix(&pattern) {
+    Some((prefix, rest)) => {
+      let root = cwd_path.join(&prefix);
+      (
+        root.to_string_lossy().to_string(),
+        rest,
+        Some(PathBuf::from(prefix)),
+      )
+    }
+    None => (cwd.clone(), pattern.clone(), None),
+  };
+
+  // Build override (whitelist) relative to walk_root
+  let mut override_builder = OverrideBuilder::new(&walk_root);
   override_builder
-    .add(&pattern)
+    .add(&pattern_for_override)
     .map_err(|e| Error::from_reason(e.to_string()))?;
 
   if let Some(ref excludes) = opts.exclude {
@@ -59,13 +91,12 @@ pub fn glob_sync(
     .build()
     .map_err(|e| Error::from_reason(e.to_string()))?;
 
-  // 复制一份给目录匹配用（walker 会消耗 overrides 所有权）
   let dir_matcher = Arc::new(overrides.clone());
 
-  let mut builder = WalkBuilder::new(&cwd);
+  let mut builder = WalkBuilder::new(&walk_root);
   builder
     .overrides(overrides)
-    .standard_filters(opts.git_ignore.unwrap_or(true))
+    .standard_filters(opts.git_ignore.unwrap_or(false))
     .threads(concurrency);
 
   // We use two vectors to avoid enum overhead in the lock if possible, but Mutex<Vec<T>> is easier
@@ -75,7 +106,7 @@ pub fn glob_sync(
   let result_strings_clone = result_strings.clone();
   let result_dirents_clone = result_dirents.clone();
 
-  let root_path = Path::new(&cwd).to_path_buf();
+  let root_path = Path::new(&walk_root).to_path_buf();
 
   builder.build_parallel().run(move || {
     let result_strings = result_strings_clone.clone();
@@ -144,16 +175,26 @@ pub fn glob_sync(
   });
 
   if with_file_types {
-    let final_results = Arc::try_unwrap(result_dirents)
+    let mut final_results = Arc::try_unwrap(result_dirents)
       .map_err(|_| Error::from_reason("Lock error"))?
       .into_inner()
       .map_err(|_| Error::from_reason("Mutex error"))?;
+    if let Some(ref prefix) = result_prefix {
+      for d in final_results.iter_mut() {
+        d.parent_path = prefix.join(&d.parent_path).to_string_lossy().to_string();
+      }
+    }
     Ok(Either::B(final_results))
   } else {
-    let final_results = Arc::try_unwrap(result_strings)
+    let mut final_results = Arc::try_unwrap(result_strings)
       .map_err(|_| Error::from_reason("Lock error"))?
       .into_inner()
       .map_err(|_| Error::from_reason("Mutex error"))?;
+    if let Some(ref prefix) = result_prefix {
+      for r in final_results.iter_mut() {
+        *r = prefix.join(r.as_str()).to_string_lossy().to_string();
+      }
+    }
     Ok(Either::A(final_results))
   }
 }
