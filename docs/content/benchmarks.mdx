@@ -14,7 +14,7 @@ Rush-FS excels at **recursive and batch filesystem operations** where Rust's par
 | `rm` 2000 files (4 threads)                      | 92 ms     | 53 ms    | **1.75x** |
 | `cp` 500-file flat dir (4 threads)               | 86.45 ms  | 32.88 ms | **2.6x**  |
 | `cp` tree dir ~363 nodes (4 threads)             | 108.73 ms | 46.88 ms | **2.3x**  |
-| `glob` large tree (`node_modules/**/*.json`, ~30k entries) | fast-glob 303 ms | 30 ms | **~10x** |
+| `glob` large tree (`node_modules/**/*.json`, ~30k entries) | fast-glob 303 ms | 30 ms | **10x** |
 
 ## On par with Node.js
 

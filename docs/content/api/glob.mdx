@@ -34,7 +34,7 @@ From repo benchmarks (`pnpm build && pnpm bench glob`), Apple Silicon, Node 24, 
 
 | Scenario | Baseline | Rush-FS | Note |
 | -------- | -------- | ------- | ---- |
-| Large tree `node_modules/**/*.json` (~30k entries) | fast-glob 303 ms | 30 ms | **~10x** faster |
+| Large tree `node_modules/**/*.json` (~30k entries) | fast-glob 303 ms | 30 ms | **10x** faster |
 | Recursive `**/*.rs` (small/medium tree) | node-glob 22 ms | 40 ms | node-glob faster at this scale |
 | Simple `src/*.rs` | node-glob 46 µs | 1.5 ms | Rush-FS has fixed startup cost; use for large trees |
 

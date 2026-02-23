@@ -85,30 +85,30 @@ await rm('./temp', { recursive: true, force: true })
 | `access` R_OK（目录）                                            | 4.18 µs   | 1.55 µs  | **2.7x**  |
 | `cp` 500 文件平铺目录（4 线程）                                  | 86.45 ms  | 32.88 ms | **2.6x**  |
 | `cp` 树形目录 ~363 节点（4 线程）                                | 108.73 ms | 46.88 ms | **2.3x**  |
-| `glob` 大树（`node_modules/**/*.json`，约 3 万条目）vs fast-glob | 303 ms    | 30 ms    | **~10x**  |
+| `glob` 大树（`node_modules/**/*.json`，约 3 万条目）vs fast-glob | 303 ms    | 30 ms    | **10x**   |
 
 ### 与 Node.js 持平的场景
 
-单文件操作有约 0.3 µs 的 napi 桥接开销。递归 glob 在**小树**上与 node-glob 持平，在**大树**（如 node_modules）上 Rush-FS 明显更快（见上表）。
+单文件操作有约 0.3 µs 的 napi 桥接开销。**大树**下 glob 见上表；**小/中树**下 node-glob 更快（见「Node.js 更快的场景」）。
 
-| 场景                                       | Node.js | Rush-FS | 比率 |
-| ------------------------------------------ | ------- | ------- | ---- |
-| `stat`（单文件）                           | 1.45 µs | 1.77 µs | 1.2x |
-| `readFile` 小文件（Buffer）                | 8.86 µs | 9.46 µs | 1.1x |
-| `writeFile` 小文件（string）               | 74 µs   | 66 µs   | 0.9x |
-| `writeFile` 小文件（Buffer）               | 115 µs  | 103 µs  | 0.9x |
-| `appendFile`                               | 30 µs   | 27 µs   | 0.9x |
-| `glob` 递归（`**/*.rs`，小树）vs node-glob | 22 ms   | 40 ms   | 1.8x |
+| 场景                         | Node.js | Rush-FS | 比率 |
+| ---------------------------- | ------- | ------- | ---- |
+| `stat`（单文件）             | 1.45 µs | 1.77 µs | 1.2x |
+| `readFile` 小文件（Buffer）  | 8.86 µs | 9.46 µs | 1.1x |
+| `writeFile` 小文件（string） | 74 µs   | 66 µs   | 0.9x |
+| `writeFile` 小文件（Buffer） | 115 µs  | 103 µs  | 0.9x |
+| `appendFile`                 | 30 µs   | 27 µs   | 0.9x |
 
 ### Node.js 更快的场景
 
-极轻量级的内置调用，napi 开销占比较大：
+极轻量级的内置调用 napi 开销占主导；小/中规模目录树下 node-glob 比 Rush-FS 的 glob 更快：
 
-| 场景                       | Node.js | Rush-FS | 说明                     |
-| -------------------------- | ------- | ------- | ------------------------ |
-| `existsSync`（已存在文件） | 444 ns  | 1.34 µs | Node.js 内部有 fast path |
-| `accessSync` F_OK          | 456 ns  | 1.46 µs | 同上——napi 开销占主导    |
-| `writeFile` 4 MB string    | 2.93 ms | 5.69 ms | 大字符串跨 napi 桥传输   |
+| 场景                                       | Node.js | Rush-FS | 说明                     |
+| ------------------------------------------ | ------- | ------- | ------------------------ |
+| `existsSync`（已存在文件）                 | 444 ns  | 1.34 µs | Node.js 内部有 fast path |
+| `accessSync` F_OK                          | 456 ns  | 1.46 µs | 同上——napi 开销占主导    |
+| `writeFile` 4 MB string                    | 2.93 ms | 5.69 ms | 大字符串跨 napi 桥传输   |
+| `glob` 递归（`**/*.rs`，小树）vs node-glob | 22 ms   | 40 ms   | 此规模下 node-glob 更快  |
 
 ### 并行支持
 
