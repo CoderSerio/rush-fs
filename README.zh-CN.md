@@ -2,7 +2,7 @@
 
 # Rush-FS
 
-[English](./README.md) | 中文
+[English](./README.md) | [中文](./README.zh-CN.md)
 
 <p align="center">
   <img src="https://img.shields.io/badge/Written%20in-Rust-orange?style=flat-square" alt="Written in Rust">
@@ -13,8 +13,10 @@
 </p>
 
 <p align="center">
-  与 Node.js <code>fs</code> API 对齐，可无痛替换现有项目中的 fs；在海量文件操作场景下获得数倍于内置 fs 的性能，由 Rust 驱动。
+  与 Node.js <code>fs</code> API 对齐，可无痛替换现有项目中的 fs；  在海量文件操作场景下获得数倍于内置 fs 的性能，由 Rust 驱动。
 </p>
+
+</div>
 
 ## 安装
 
@@ -24,7 +26,7 @@ npm install @rush-fs/core
 pnpm add @rush-fs/core
 ```
 
-安装 `@rush-fs/core` 时，包管理器会通过 `optionalDependencies` 自动安装**当前平台**的本地绑定（例如 macOS ARM 上的 `@rush-fs/rush-fs-darwin-arm64`）。若未安装或出现「Cannot find native binding」：
+安装 `@rush-fs/core` 时，包管理器会通过 `optionalDependencies` 自动安装**当前平台**的本地绑定（例如 macOS ARM 上的 `@rush-fs/rush-fs-darwin-arm64`）。若未安装可能报错「Cannot find native binding」：
 
 1. 删除 `node_modules` 和锁文件（`package-lock.json` 或 `pnpm-lock.yaml`）后重新执行 `pnpm install`（或 `npm i`）。
 2. 或手动安装对应平台包：  
@@ -73,7 +75,7 @@ await rm('./temp', { recursive: true, force: true })
 
 这些场景中 Rust 的并行遍历和零拷贝 I/O 发挥了真正优势：
 
-| 场景                                                             | Node.js   | Rush-FS  | 加速比    |
+| 场景                                                             | Node.js   | Rush-FS  | 提效      |
 | ---------------------------------------------------------------- | --------- | -------- | --------- |
 | `readdir` 递归（node_modules，约 3 万条目）                      | 281 ms    | 23 ms    | **12x**   |
 | `copyFile` 4 MB                                                  | 4.67 ms   | 0.09 ms  | **50x**   |
@@ -89,14 +91,14 @@ await rm('./temp', { recursive: true, force: true })
 
 单文件操作有约 0.3 µs 的 napi 桥接开销。递归 glob 在**小树**上与 node-glob 持平，在**大树**（如 node_modules）上 Rush-FS 明显更快（见上表）。
 
-| 场景                                       | Node.js | Rush-FS | 比率                             |
-| ------------------------------------------ | ------- | ------- | -------------------------------- |
-| `stat`（单文件）                           | 1.45 µs | 1.77 µs | 1.2x                             |
-| `readFile` 小文件（Buffer）                | 8.86 µs | 9.46 µs | 1.1x                             |
-| `writeFile` 小文件（string）               | 74 µs   | 66 µs   | 0.9x                             |
-| `writeFile` 小文件（Buffer）               | 115 µs  | 103 µs  | 0.9x                             |
-| `appendFile`                               | 30 µs   | 27 µs   | 0.9x                             |
-| `glob` 递归（`**/*.rs`，小树）vs node-glob | ~22 ms  | ~40 ms  | ~1.8x（此规模下 node-glob 更快） |
+| 场景                                       | Node.js | Rush-FS | 比率 |
+| ------------------------------------------ | ------- | ------- | ---- |
+| `stat`（单文件）                           | 1.45 µs | 1.77 µs | 1.2x |
+| `readFile` 小文件（Buffer）                | 8.86 µs | 9.46 µs | 1.1x |
+| `writeFile` 小文件（string）               | 74 µs   | 66 µs   | 0.9x |
+| `writeFile` 小文件（Buffer）               | 115 µs  | 103 µs  | 0.9x |
+| `appendFile`                               | 30 µs   | 27 µs   | 0.9x |
+| `glob` 递归（`**/*.rs`，小树）vs node-glob | 22 ms   | 40 ms   | 1.8x |
 
 ### Node.js 更快的场景
 
@@ -304,8 +306,8 @@ graph TD
   options?: {
     force?: boolean; // ✅
     maxRetries?: number; // ✅
-    retryDelay?: number; // ✅（默认 100ms）
     recursive?: boolean; // ✅
+    retryDelay?: number; // ✅（默认 100ms）
     concurrency?: number; // ✨
   };
   ```
