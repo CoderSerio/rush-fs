@@ -18,7 +18,7 @@ Rush-FS excels at **recursive and batch filesystem operations** where Rust's par
 
 ## On par with Node.js
 
-Single-file operations have a ~0.3 µs napi bridge overhead. **Recursive glob** on a small/medium tree (e.g. `**/*.rs` over the repo) can be on par with node-glob; on **large, deep trees** Rush-FS wins (see row above). Other operations:
+Single-file operations have a ~0.3 µs napi bridge overhead. On **large, deep trees** glob wins (see “Where Rush-FS shines”); on small/medium trees node-glob is faster (see “Where Node.js wins”). Other operations:
 
 | Scenario                       | Node.js | Rush-FS | Ratio |
 | ------------------------------ | ------- | ------- | ----- |
@@ -26,16 +26,16 @@ Single-file operations have a ~0.3 µs napi bridge overhead. **Recursive glob** 
 | `readFile` small (Buffer)       | 8.86 µs | 9.46 µs | 1.1x  |
 | `writeFile` small (string)      | 74 µs   | 66 µs   | 0.9x  |
 | `appendFile`                    | 30 µs   | 27 µs   | 0.9x  |
-| `glob` recursive (`**/*.rs`, small tree) vs node-glob | ~22 ms | ~40 ms | ~1.8x (node-glob faster on this scale) |
 
 ## Where Node.js wins
 
-For very lightweight built-in calls, napi overhead dominates:
+For very lightweight built-in calls, napi overhead dominates; on small/medium trees, node-glob is faster than Rush-FS glob:
 
-| Scenario                     | Node.js | Rush-FS | Note                       |
-| ---------------------------- | ------- | ------- | -------------------------- |
-| `existsSync` (existing file) | 444 ns  | 1.34 µs | Node.js internal fast path |
-| `accessSync` F_OK            | 456 ns  | 1.46 µs | Same                       |
+| Scenario                     | Node.js | Rush-FS | Note                                |
+| ---------------------------- | ------- | ------- | ----------------------------------- |
+| `existsSync` (existing file) | 444 ns  | 1.34 µs | Node.js internal fast path          |
+| `accessSync` F_OK            | 456 ns  | 1.46 µs | Same                                |
+| `glob` recursive (`**/*.rs`, small tree) vs node-glob | 22 ms | 40 ms | node-glob faster at this scale |
 
 ## Parallelism
 
