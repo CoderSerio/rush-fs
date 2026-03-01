@@ -66,15 +66,28 @@ pub struct ReadFileOptions {
   pub flag: Option<String>,
 }
 
+fn normalize_read_file_options(
+  options: Option<Either<String, ReadFileOptions>>,
+) -> ReadFileOptions {
+  match options {
+    Some(Either::A(encoding)) => ReadFileOptions {
+      encoding: Some(encoding),
+      flag: None,
+    },
+    Some(Either::B(opts)) => opts,
+    None => ReadFileOptions {
+      encoding: None,
+      flag: None,
+    },
+  }
+}
+
 fn read_file_impl(
   path_str: String,
-  options: Option<ReadFileOptions>,
+  options: Option<Either<String, ReadFileOptions>>,
 ) -> Result<Either<String, Buffer>> {
   let path = Path::new(&path_str);
-  let opts = options.unwrap_or(ReadFileOptions {
-    encoding: None,
-    flag: None,
-  });
+  let opts = normalize_read_file_options(options);
 
   let flag = opts.flag.as_deref().unwrap_or("r");
 
@@ -142,7 +155,7 @@ fn read_file_impl(
 #[napi(js_name = "readFileSync")]
 pub fn read_file_sync(
   path: String,
-  options: Option<ReadFileOptions>,
+  options: Option<Either<String, ReadFileOptions>>,
 ) -> Result<Either<String, Buffer>> {
   read_file_impl(path, options)
 }
@@ -151,7 +164,7 @@ pub fn read_file_sync(
 
 pub struct ReadFileTask {
   pub path: String,
-  pub options: Option<ReadFileOptions>,
+  pub options: Option<Either<String, ReadFileOptions>>,
 }
 
 impl Task for ReadFileTask {
@@ -168,6 +181,9 @@ impl Task for ReadFileTask {
 }
 
 #[napi(js_name = "readFile")]
-pub fn read_file(path: String, options: Option<ReadFileOptions>) -> AsyncTask<ReadFileTask> {
+pub fn read_file(
+  path: String,
+  options: Option<Either<String, ReadFileOptions>>,
+) -> AsyncTask<ReadFileTask> {
   AsyncTask::new(ReadFileTask { path, options })
 }

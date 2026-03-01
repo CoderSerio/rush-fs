@@ -36,6 +36,21 @@ test('readFile: async should throw on non-existent file', async (t) => {
   await t.throwsAsync(async () => await readFile('./no-such-file'), { message: /ENOENT/ })
 })
 
+test('readFile: async should return string with encoding as string param', async (t) => {
+  const result = await readFile('./package.json', 'utf-8')
+  t.is(typeof result, 'string')
+})
+
+test('readFile: async should return string with encoding as options object', async (t) => {
+  const result = await readFile('./package.json', { encoding: 'utf-8' })
+  t.is(typeof result, 'string')
+})
+
+test('readFile: async should return Buffer with no encoding', async (t) => {
+  const result = await readFile('./package.json')
+  t.true(Buffer.isBuffer(result))
+})
+
 test('dual-run: readFileSync Buffer should match node:fs byte-for-byte', (t) => {
   const nodeResult = nodeFs.readFileSync('./package.json')
   const hyperResult = readFileSync('./package.json') as Buffer
