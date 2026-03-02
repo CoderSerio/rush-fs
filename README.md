@@ -85,30 +85,30 @@ These are the scenarios where Rust's parallelism and zero-copy I/O make a real d
 | `access` R_OK (directory)                                               | 4.18 µs   | 1.55 µs  | **2.7x**  |
 | `cp` 500-file flat dir (4 threads)                                      | 86.45 ms  | 32.88 ms | **2.6x**  |
 | `cp` tree dir ~363 nodes (4 threads)                                    | 108.73 ms | 46.88 ms | **2.3x**  |
-| `glob` large tree (`node_modules/**/*.json`, ~30k entries) vs fast-glob | 303 ms    | 30 ms    | **~10x**  |
+| `glob` large tree (`node_modules/**/*.json`, ~30k entries) vs fast-glob | 303 ms    | 30 ms    | **10x**   |
 
 ### On Par with Node.js
 
-Single-file operations have a ~0.3 µs napi bridge overhead. Recursive glob on a **small tree** is on par with node-glob; on **large trees** (e.g. node_modules) Rush-FS wins (see table above).
+Single-file operations have a ~0.3 µs napi bridge overhead. On **large trees** glob wins (see table above); on small/medium trees node-glob is faster (see “Where Node.js Wins”).
 
-| Scenario                                              | Node.js | Rush-FS | Ratio                                 |
-| ----------------------------------------------------- | ------- | ------- | ------------------------------------- |
-| `stat` (single file)                                  | 1.45 µs | 1.77 µs | 1.2x                                  |
-| `readFile` small (Buffer)                             | 8.86 µs | 9.46 µs | 1.1x                                  |
-| `writeFile` small (string)                            | 74 µs   | 66 µs   | 0.9x                                  |
-| `writeFile` small (Buffer)                            | 115 µs  | 103 µs  | 0.9x                                  |
-| `appendFile`                                          | 30 µs   | 27 µs   | 0.9x                                  |
-| `glob` recursive (`**/*.rs`, small tree) vs node-glob | 22 ms   | 40 ms   | 1.8x (node-glob faster at this scale) |
+| Scenario                   | Node.js | Rush-FS | Ratio |
+| -------------------------- | ------- | ------- | ----- |
+| `stat` (single file)       | 1.45 µs | 1.77 µs | 1.2x  |
+| `readFile` small (Buffer)  | 8.86 µs | 9.46 µs | 1.1x  |
+| `writeFile` small (string) | 74 µs   | 66 µs   | 0.9x  |
+| `writeFile` small (Buffer) | 115 µs  | 103 µs  | 0.9x  |
+| `appendFile`               | 30 µs   | 27 µs   | 0.9x  |
 
 ### Where Node.js Wins
 
-Lightweight built-in calls where napi overhead is proportionally large:
+Lightweight built-in calls where napi overhead dominates; on small/medium trees, node-glob is faster than Rush-FS glob:
 
-| Scenario                     | Node.js | Rush-FS | Note                              |
-| ---------------------------- | ------- | ------- | --------------------------------- |
-| `existsSync` (existing file) | 444 ns  | 1.34 µs | Node.js internal fast path        |
-| `accessSync` F_OK            | 456 ns  | 1.46 µs | Same — napi overhead dominates    |
-| `writeFile` 4 MB string      | 2.93 ms | 5.69 ms | Large string crossing napi bridge |
+| Scenario                                              | Node.js | Rush-FS | Note                              |
+| ----------------------------------------------------- | ------- | ------- | --------------------------------- |
+| `existsSync` (existing file)                          | 444 ns  | 1.34 µs | Node.js internal fast path        |
+| `accessSync` F_OK                                     | 456 ns  | 1.46 µs | Same — napi overhead dominates    |
+| `writeFile` 4 MB string                               | 2.93 ms | 5.69 ms | Large string crossing napi bridge |
+| `glob` recursive (`**/*.rs`, small tree) vs node-glob | 22 ms   | 40 ms   | node-glob faster at this scale    |
 
 ### Parallelism
 
