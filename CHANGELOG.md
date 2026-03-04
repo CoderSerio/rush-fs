@@ -6,9 +6,7 @@ All notable changes to Rush-FS are documented here. The format is based on [Keep
 
 - (Add new changes here before each release.)
 
-## [0.1.0] - (release date TBD)
-
-**This release is in beta.** API and behavior may change before 0.1.0 stable. Feedback and issues are welcome.
+## [0.1.0] - 2026-03-05
 
 ### Changed
 
@@ -20,6 +18,7 @@ All notable changes to Rush-FS are documented here. The format is based on [Keep
 
 - **glob:** Patterns with a path prefix (e.g. `.dir/**/*.txt` or `src/**/*.ts`) now work when used without an explicit `cwd`; the prefix is used as the search root, matching Node.js behavior.
 - **glob:** Recursive pattern `**/*.ext` with `cwd` now correctly recurses into subdirectories.
+- **readFile:** Async `readFile(path, encoding)` with string as second argument (e.g. `readFile(path, 'utf-8')`) now returns a decoded string instead of Buffer, matching Node.js and fixing issue #16.
 
 ## [0.0.5]
 
@@ -42,8 +41,8 @@ All notable changes to Rush-FS are documented here. The format is based on [Keep
 
 ---
 
-[Unreleased]: https://github.com/CoderSerio/rush-fs/compare/v0.1.0-beta.1...HEAD
-[0.1.0]: https://github.com/CoderSerio/rush-fs/compare/v0.0.5...v0.1.0-beta.1
+[Unreleased]: https://github.com/CoderSerio/rush-fs/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/CoderSerio/rush-fs/compare/v0.0.5...v0.1.0
 [0.0.5]: https://github.com/CoderSerio/rush-fs/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/CoderSerio/rush-fs/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/CoderSerio/rush-fs/releases/tag/v0.0.3

@@ -164,14 +164,17 @@ export declare function readdirSync(
   options?: ReaddirOptions | undefined | null,
 ): Array<string> | Array<Dirent>
 
-export declare function readFile(path: string, options?: ReadFileOptions | undefined | null): Promise<unknown>
+export declare function readFile(path: string, options?: string | ReadFileOptions | undefined | null): Promise<unknown>
 
 export interface ReadFileOptions {
   encoding?: string
   flag?: string
 }
 
-export declare function readFileSync(path: string, options?: ReadFileOptions | undefined | null): string | Buffer
+export declare function readFileSync(
+  path: string,
+  options?: string | ReadFileOptions | undefined | null,
+): string | Buffer
 
 export declare function readlink(path: string): Promise<unknown>
 
