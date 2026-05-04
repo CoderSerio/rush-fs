@@ -222,8 +222,12 @@ fn read_file_impl(
   // If lines option is specified with a text encoding, use streaming line-by-line reading
   // to avoid loading the entire file into memory. Buffer mode (no encoding) ignores lines.
   if let (Some(lines), Some(_)) = (&opts.lines, &opts.encoding) {
-    let contents =
-      read_file_with_lines(path, &mut open_opts, lines.clone(), opts.encoding.as_deref())?;
+    let contents = read_file_with_lines(
+      path,
+      &mut open_opts,
+      lines.clone(),
+      opts.encoding.as_deref(),
+    )?;
     return Ok(Either::A(contents));
   }
 
